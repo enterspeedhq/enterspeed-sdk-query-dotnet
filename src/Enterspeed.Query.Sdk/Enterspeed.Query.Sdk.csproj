@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+
+		<PackageId>Enterspeed.Query.Sdk</PackageId>
+		<Authors>Enterspeed</Authors>
+		<Description>.NET SDK for Enterspeed Query API</Description>
+		<IsPackable>true</IsPackable>
+		<RepositoryUrl>https://github.com/enterspeedhq/enterspeed-sdk-query-dotnet</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
+		<PackageProjectUrl>https://github.com/enterspeedhq/enterspeed-sdk-query-dotnet</PackageProjectUrl>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Domain\Exceptions\**" />
+	  <EmbeddedResource Remove="Domain\Exceptions\**" />
+	  <None Remove="Domain\Exceptions\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="System.Text.Json" Version="[5.0,10.0)" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+		<PackageReference Include="System.Text.Json" Version="[5.0,10.0)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>Enterspeed.Query.Sdk.Tests</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="..\..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\..\src\Enterspeed.Query.Sdk\icon.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
+
+</Project>

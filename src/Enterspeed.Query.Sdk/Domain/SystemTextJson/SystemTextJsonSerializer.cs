@@ -1,0 +1,44 @@
+﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Enterspeed.Query.Sdk.Api.Services;
+
+namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
+{
+    public class SystemTextJsonSerializer : IJsonSerializer
+    {
+        private readonly JsonSerializerOptions _options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        public SystemTextJsonSerializer(IList<JsonConverter> converters = null)
+        {
+            if (converters != null && converters.Any())
+            {
+                foreach (var converter in converters)
+                {
+                    _options.Converters.Add(converter);
+                }
+            }
+            else
+            {
+                _options.Converters.Add(new ContentConverter());
+                _options.Converters.Add(new FilterConverter());
+            }
+        }
+
+        public string Serialize(object value)
+        {
+            return JsonSerializer.Serialize(value, _options);
+        }
+
+        public T Deserialize<T>(string value)
+        {
+            return JsonSerializer.Deserialize<T>(value, _options);
+        }
+    }
+}
+#endif
