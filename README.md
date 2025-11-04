@@ -1,4 +1,4 @@
-# [Enterspeed Query .NET SDK](https://www.enterspeed.com/) &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE) [![NuGet version](https://img.shields.io/nuget/v/Enterspeed.Query.Sdk)](https://www.nuget.org/packages/Enterspeed.Query.Sdk/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/enterspeedhq/enterspeed-sdk-query-dotnet/pulls) [![Twitter](https://img.shields.io/twitter/follow/enterspeedhq?style=social)](https://twitter.com/enterspeedhq)
+# [Enterspeed Query .NET SDK](https://www.enterspeed.com/) &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE) [![NuGet version](https://img.shields.io/nuget/v/Enterspeed.Query.Sdk)](https://www.nuget.org/packages/Enterspeed.Query.Sdk/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/enterspeedhq/enterspeed-sdk-query-dotnet/pulls)
 
 ## Installation
 
@@ -31,14 +31,15 @@ using Enterspeed.Query.Sdk.Api.Extensions;
 using Enterspeed.Query.Sdk.Api.Models;
 using Enterspeed.Query.Sdk.Api.Services;
 using Enterspeed.Query.Sdk.Domain.Models;
-using Facet = Enterspeed.Query.Sdk.Domain.Models.Facet;
+using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
+using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
 
-namespace Query; 
+namespace Query;
 
 public class MyQueryService
 {
     private readonly IEnterspeedQueryService _enterspeedQueryService;
-    
+
     public MyQueryService(IEnterspeedQueryService enterspeedQueryService)
     {
         _enterspeedQueryService = enterspeedQueryService;
@@ -220,7 +221,8 @@ public class MyQueryService
         return response;
     }
 
-    public class BlogPost {
+    public class BlogPost
+    {
         [JsonPropertyName("date")]
         public DateTime PublishedDate { get; set; }
         public string Title { get; set; }
@@ -228,7 +230,8 @@ public class MyQueryService
         public string[] Tags { get; set; }
     }
 
-    public class Product {
+    public class Product
+    {
         public string Url { get; set; }
         public string ProductName { get; set; }
         public double Price { get; set; }
