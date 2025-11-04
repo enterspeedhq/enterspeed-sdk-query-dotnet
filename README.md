@@ -57,7 +57,7 @@ public class MyQueryService
                     Order = SortOrder.Desc
                 }
             },
-            Facets = new List<Facet> // TODO: This requires Enterspeed.Query.Sdk.Domain.Models.Facet not Enterspeed.Query.Sdk.Api.Models.Facet so the using setting Facet above is needed
+            Facets = new List<Facet>
             {
                 new Facet()
                 {
