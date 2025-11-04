@@ -26,8 +26,12 @@ using IHost host = Host.CreateDefaultBuilder(args)
 ### Examples of usage
 Example of a common implementation where the query service is being utilized.
 ```c#
+using System.Text.Json.Serialization;
+using Enterspeed.Query.Sdk.Api.Extensions;
 using Enterspeed.Query.Sdk.Api.Models;
 using Enterspeed.Query.Sdk.Api.Services;
+using Enterspeed.Query.Sdk.Domain.Models;
+using Facet = Enterspeed.Query.Sdk.Domain.Models.Facet;
 
 namespace Query; 
 
@@ -53,7 +57,7 @@ public class MyQueryService
                     Order = SortOrder.Desc
                 }
             },
-            Facets = new List<Facet>
+            Facets = new List<Facet> // TODO: This requires Enterspeed.Query.Sdk.Domain.Models.Facet not Enterspeed.Query.Sdk.Api.Models.Facet so the using setting Facet above is needed
             {
                 new Facet()
                 {
@@ -66,7 +70,7 @@ public class MyQueryService
             {
                 And = new List<IOperator>
                 {
-                    new EqualsOperator<string>
+                    new EqualsOperator<bool>
                     {
                         Field = "isActive",
                         Value = true
@@ -75,7 +79,7 @@ public class MyQueryService
                     {
                         Or = new List<IOperator>
                         {
-                            new EqualsOperator<string>
+                            new EqualsOperator<bool>
                             {
                                 Field = "isGlobal",
                                 Value = true
@@ -97,7 +101,7 @@ public class MyQueryService
             }
         };
 
-        var response = await enterspeedQueryService.Query("environment-******-****-****-****-**********", "blogIndex", query);
+        var response = await _enterspeedQueryService.Query("environment-******-****-****-****-**********", "blogIndex", query);
 
         return response;
     }
@@ -105,7 +109,7 @@ public class MyQueryService
     // Query an Enterspeed index and get strongly typed result
     public async Task<List<BlogPost>> QueryTyped()
     {
-        var typedResult = await enterspeedQueryService.QueryTypd("environment-******-****-****-****-**********", "blogIndex", new QueryObject());
+        var typedResult = await _enterspeedQueryService.QueryTyped("environment-******-****-****-****-**********", "blogIndex", new QueryObject());
 
         List<BlogPost> blogPosts = typedResult.Response.Results.GetContent<BlogPost>();
 
@@ -131,7 +135,7 @@ public class MyQueryService
                             CaseInsensitive = true
                         }
                     }
-                }
+                },
                 Pagination = new Pagination
                 {
                     Page = 0,
@@ -156,18 +160,18 @@ public class MyQueryService
                     PageSize = 0
                 }
             }
-        }
+        };
 
-        var response = await enterspeedQueryService.Query("environment-******-****-****-****-**********", multiQuery);
+        var response = await _enterspeedQueryService.Query("environment-******-****-****-****-**********", multiQuery);
 
-        var blogPostsQueryResponse = multipleResult.Response.Single(x => x.Name == "blogPosts");
-        var allFacetsQueryResponse = multipleResult.Response.Single(x => x.Name == "allFacets");
+        var blogPostsQueryResponse = response.Response.Single(x => x.Name == "blogPosts");
+        var allFacetsQueryResponse = response.Response.Single(x => x.Name == "allFacets");
 
         return response;
     }
 
     // Multiple queries against an Enterspeed index and get strongly typed results
-    public async Task<MultiQueryApiResponse> MultiQueryTyped()
+    public async Task<MultiQueryApiResponse<IContent>> MultiQueryTyped()
     {
         var multiQuery = new List<MultiQueryObject>{
             new()
@@ -206,12 +210,12 @@ public class MyQueryService
                     PageSize = 10
                 }
             }
-        }
+        };
 
-        var response = await enterspeedQueryService.QueryTyped("environment-******-****-****-****-**********", multiQuery);
+        var response = await _enterspeedQueryService.QueryTyped("environment-******-****-****-****-**********", multiQuery);
 
-        List<BlogPost> blogPosts = multipleResult.Response.Single(x => x.Name == "blogPosts").Results.GetContent<BlogPost>();
-        List<Product> products = multipleResult.Response.Single(x => x.Name == "allFacets").Results.GetContent<Product>();
+        List<BlogPost> blogPosts = response.Response.Single(x => x.Name == "blogPosts").Results.GetContent<BlogPost>();
+        List<Product> products = response.Response.Single(x => x.Name == "allFacets").Results.GetContent<Product>();
 
         return response;
     }
