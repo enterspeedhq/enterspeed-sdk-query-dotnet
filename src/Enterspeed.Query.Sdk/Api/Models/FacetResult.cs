@@ -2,7 +2,7 @@
 
 namespace Enterspeed.Query.Sdk.Api.Models
 {
-    public class Facet
+    public class FacetResult
     {
         public string Name { get; set; }
         public string Field { get; set; }

@@ -1,4 +1,4 @@
-# [Enterspeed Query .NET SDK](https://www.enterspeed.com/) &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE) [![NuGet version](https://img.shields.io/nuget/v/Enterspeed.Query.Sdk)](https://www.nuget.org/packages/Enterspeed.Query.Sdk/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/enterspeedhq/enterspeed-sdk-query-dotnet/pulls) [![Twitter](https://img.shields.io/twitter/follow/enterspeedhq?style=social)](https://twitter.com/enterspeedhq)
+# [Enterspeed Query .NET SDK](https://www.enterspeed.com/) &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE) [![NuGet version](https://img.shields.io/nuget/v/Enterspeed.Query.Sdk)](https://www.nuget.org/packages/Enterspeed.Query.Sdk/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/enterspeedhq/enterspeed-sdk-query-dotnet/pulls)
 
 ## Installation
 
@@ -26,15 +26,20 @@ using IHost host = Host.CreateDefaultBuilder(args)
 ### Examples of usage
 Example of a common implementation where the query service is being utilized.
 ```c#
+using System.Text.Json.Serialization;
+using Enterspeed.Query.Sdk.Api.Extensions;
 using Enterspeed.Query.Sdk.Api.Models;
 using Enterspeed.Query.Sdk.Api.Services;
+using Enterspeed.Query.Sdk.Domain.Models;
+using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
+using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
 
-namespace Query; 
+namespace Query;
 
 public class MyQueryService
 {
     private readonly IEnterspeedQueryService _enterspeedQueryService;
-    
+
     public MyQueryService(IEnterspeedQueryService enterspeedQueryService)
     {
         _enterspeedQueryService = enterspeedQueryService;
@@ -66,7 +71,7 @@ public class MyQueryService
             {
                 And = new List<IOperator>
                 {
-                    new EqualsOperator<string>
+                    new EqualsOperator<bool>
                     {
                         Field = "isActive",
                         Value = true
@@ -75,7 +80,7 @@ public class MyQueryService
                     {
                         Or = new List<IOperator>
                         {
-                            new EqualsOperator<string>
+                            new EqualsOperator<bool>
                             {
                                 Field = "isGlobal",
                                 Value = true
@@ -97,7 +102,7 @@ public class MyQueryService
             }
         };
 
-        var response = await enterspeedQueryService.Query("environment-******-****-****-****-**********", "blogIndex", query);
+        var response = await _enterspeedQueryService.Query("environment-******-****-****-****-**********", "blogIndex", query);
 
         return response;
     }
@@ -105,7 +110,7 @@ public class MyQueryService
     // Query an Enterspeed index and get strongly typed result
     public async Task<List<BlogPost>> QueryTyped()
     {
-        var typedResult = await enterspeedQueryService.QueryTypd("environment-******-****-****-****-**********", "blogIndex", new QueryObject());
+        var typedResult = await _enterspeedQueryService.QueryTyped("environment-******-****-****-****-**********", "blogIndex", new QueryObject());
 
         List<BlogPost> blogPosts = typedResult.Response.Results.GetContent<BlogPost>();
 
@@ -131,7 +136,7 @@ public class MyQueryService
                             CaseInsensitive = true
                         }
                     }
-                }
+                },
                 Pagination = new Pagination
                 {
                     Page = 0,
@@ -156,18 +161,18 @@ public class MyQueryService
                     PageSize = 0
                 }
             }
-        }
+        };
 
-        var response = await enterspeedQueryService.Query("environment-******-****-****-****-**********", multiQuery);
+        var response = await _enterspeedQueryService.Query("environment-******-****-****-****-**********", multiQuery);
 
-        var blogPostsQueryResponse = multipleResult.Response.Single(x => x.Name == "blogPosts");
-        var allFacetsQueryResponse = multipleResult.Response.Single(x => x.Name == "allFacets");
+        var blogPostsQueryResponse = response.Response.Single(x => x.Name == "blogPosts");
+        var allFacetsQueryResponse = response.Response.Single(x => x.Name == "allFacets");
 
         return response;
     }
 
     // Multiple queries against an Enterspeed index and get strongly typed results
-    public async Task<MultiQueryApiResponse> MultiQueryTyped()
+    public async Task<MultiQueryApiResponse<IContent>> MultiQueryTyped()
     {
         var multiQuery = new List<MultiQueryObject>{
             new()
@@ -206,17 +211,18 @@ public class MyQueryService
                     PageSize = 10
                 }
             }
-        }
+        };
 
-        var response = await enterspeedQueryService.QueryTyped("environment-******-****-****-****-**********", multiQuery);
+        var response = await _enterspeedQueryService.QueryTyped("environment-******-****-****-****-**********", multiQuery);
 
-        List<BlogPost> blogPosts = multipleResult.Response.Single(x => x.Name == "blogPosts").Results.GetContent<BlogPost>();
-        List<Product> products = multipleResult.Response.Single(x => x.Name == "allFacets").Results.GetContent<Product>();
+        List<BlogPost> blogPosts = response.Response.Single(x => x.Name == "blogPosts").Results.GetContent<BlogPost>();
+        List<Product> products = response.Response.Single(x => x.Name == "allFacets").Results.GetContent<Product>();
 
         return response;
     }
 
-    public class BlogPost {
+    public class BlogPost
+    {
         [JsonPropertyName("date")]
         public DateTime PublishedDate { get; set; }
         public string Title { get; set; }
@@ -224,7 +230,8 @@ public class MyQueryService
         public string[] Tags { get; set; }
     }
 
-    public class Product {
+    public class Product
+    {
         public string Url { get; set; }
         public string ProductName { get; set; }
         public double Price { get; set; }

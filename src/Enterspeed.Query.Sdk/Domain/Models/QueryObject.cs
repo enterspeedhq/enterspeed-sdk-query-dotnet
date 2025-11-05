@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Enterspeed.Query.Sdk.Domain.Models
