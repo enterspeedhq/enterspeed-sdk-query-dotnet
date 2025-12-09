@@ -1,8 +1,19 @@
 ﻿namespace Enterspeed.Query.Sdk.Domain.Models.FilterOperators
 {
-    public class LessThanOrEqualsOperator<TValue> : FilterOperator<TValue>
+    public class LessThanOrEqualsOperator<TValue> : IFilterOperator<TValue>
     {
-        public override string Operator => "lessThanOrEquals";
-        public override TValue Value { get; set; }
+        public string Operator => "lessThanOrEquals";
+
+        public
+            #if NET7_0_OR_GREATER
+                required
+            #endif 
+            string Field { get; set; }
+
+        public
+            #if NET7_0_OR_GREATER
+                required
+            #endif 
+            TValue Value { get; set; }
     }
 }

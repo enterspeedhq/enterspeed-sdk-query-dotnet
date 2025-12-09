@@ -1,13 +1,13 @@
 ﻿namespace Enterspeed.Query.Sdk.Domain.Models.FilterOperators
 {
-    public abstract class FilterOperator<TValue> : FilterOperator
+    public interface IFilterOperator<TValue> : IFilterOperator
     {
-        public abstract TValue Value { get; set; }
+        TValue Value { get; set; }
     }
 
-    public abstract class FilterOperator : IOperator
+    public interface IFilterOperator : IOperator
     {
-        public string Field { get; set; }
-        public abstract string Operator { get; }
+        string Field { get; set; }
+        string Operator { get; }
     }
 }

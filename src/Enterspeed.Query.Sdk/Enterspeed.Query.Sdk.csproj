@@ -10,7 +10,7 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
+		<TargetFrameworks>net7.0;net6.0;netstandard2.0</TargetFrameworks>
 		<PackageProjectUrl>https://github.com/enterspeedhq/enterspeed-sdk-query-dotnet</PackageProjectUrl>
 		<PackageIcon>icon.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

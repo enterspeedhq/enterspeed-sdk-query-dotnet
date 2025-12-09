@@ -1,9 +1,21 @@
 ﻿namespace Enterspeed.Query.Sdk.Domain.Models.FilterOperators
 {
-    public class EqualsOperator<TValue> : FilterOperator<TValue>
+    public class EqualsOperator<TValue> : IFilterOperator<TValue>
     {
-        public override string Operator => "equals";
-        public override TValue Value { get; set; }
+        public string Operator => "equals";
+
+        public
+            #if NET7_0_OR_GREATER
+                required
+            #endif 
+            string Field { get; set; }
+
+        public
+            #if NET7_0_OR_GREATER
+                required
+            #endif 
+            TValue Value { get; set; }
+
         public bool CaseInsensitive { get; set; }
     }
 }
