@@ -1,9 +1,21 @@
 ﻿namespace Enterspeed.Query.Sdk.Domain.Models.FilterOperators
 {
-    public class NotEqualsOperator<TValue> : FilterOperator<TValue>
+    public class NotEqualsOperator<TValue> : IFilterOperator<TValue>
     {
-        public override string Operator => "notEquals";
-        public override TValue Value { get; set; }
+        public string Operator => "notEquals";
+
+        public
+            #if NET7_0_OR_GREATER
+                required
+            #endif 
+            string Field { get; set; }
+
+        public
+            #if NET7_0_OR_GREATER
+                required
+            #endif 
+            TValue Value { get; set; }
+
         public bool CaseInsensitive { get; set; }
     }
 }
