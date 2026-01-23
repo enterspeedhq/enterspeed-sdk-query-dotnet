@@ -1,0 +1,289 @@
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Enterspeed.Query.Sdk.Api.Models.MultiQuery;
+using Enterspeed.Query.Sdk.Api.Models.Query;
+
+namespace Enterspeed.Query.Sdk.Api.Models
+{
+    /// <summary>
+    /// Custom converter for polymorphic QueryResponse that handles discriminator
+    /// property appearing in any position (not just first)
+    /// </summary>
+    public class QueryResponseConverter : JsonConverter<QueryResponse>
+    {
+        private const string DiscriminatorPropertyName = "status";
+
+        public override QueryResponse Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            using (var jsonDoc = JsonDocument.ParseValue(ref reader))
+            {
+                var root = jsonDoc.RootElement;
+
+                // Extract discriminator value from anywhere in the JSON
+                if (!root.TryGetProperty(DiscriminatorPropertyName, out var discriminatorElement))
+                {
+                    throw new JsonException($"Missing required discriminator property '{DiscriminatorPropertyName}'");
+                }
+
+                // Get the numeric or string discriminator value
+                var discriminatorValue = GetDiscriminatorValue(discriminatorElement);
+
+                // Determine which concrete type to deserialize into
+                Type targetType;
+                switch (discriminatorValue)
+                {
+                    case 0:
+                    case (long)0:
+                        targetType = typeof(QueryResponseSuccess);
+                        break;
+                    case 1:
+                    case (long)1:
+                        targetType = typeof(QueryResponseError);
+                        break;
+                    default:
+                        throw new JsonException($"Unknown discriminator value: {discriminatorValue}");
+                }
+
+                // Deserialize using the concrete type
+                var concreteResponse = JsonSerializer.Deserialize(
+                    root.GetRawText(),
+                    targetType,
+                    options);
+
+                return (QueryResponse)concreteResponse;
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, QueryResponse value, JsonSerializerOptions options)
+        {
+            // Ensure discriminator is written first
+            JsonSerializer.Serialize<object>(writer, value, options);
+        }
+
+        private static object GetDiscriminatorValue(JsonElement element)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Number:
+                    return element.TryGetInt32(out var intValue) ? intValue : element.GetInt64();
+                case JsonValueKind.String:
+                    return element.GetString();
+                case JsonValueKind.True:
+                    return true;
+                case JsonValueKind.False:
+                    return false;
+                default:
+                    throw new JsonException($"Unexpected discriminator type: {element.ValueKind}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Custom converter for polymorphic MultiQueryResponse (same pattern)
+    /// </summary>
+    public class MultiQueryResponseConverter : JsonConverter<MultiQueryResponse>
+    {
+        private const string DiscriminatorPropertyName = "status";
+
+        public override MultiQueryResponse Read(ref Utf8JsonReader reader, Type typeToConvert,
+            JsonSerializerOptions options)
+        {
+            var jsonDoc = JsonDocument.ParseValue(ref reader);
+            try
+            {
+                var root = jsonDoc.RootElement;
+
+                if (!root.TryGetProperty(DiscriminatorPropertyName, out JsonElement discriminatorElement))
+                {
+                    throw new JsonException($"Missing required discriminator property '{DiscriminatorPropertyName}'");
+                }
+
+                var discriminatorValue = GetDiscriminatorValue(discriminatorElement);
+                var targetType = GetTargetType(discriminatorValue);
+
+                // Create a NEW JsonSerializerOptions WITHOUT this converter to avoid recursion
+                var optionsWithoutConverter = CreateOptionsWithoutThisConverter(options);
+
+                var concreteResponse = JsonSerializer.Deserialize(
+                    root.GetRawText(),
+                    targetType,
+                    optionsWithoutConverter);
+
+                return (MultiQueryResponse)concreteResponse;
+            }
+            finally
+            {
+                jsonDoc.Dispose();
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, MultiQueryResponse value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, (object)value, options);
+        }
+
+        private Type GetTargetType(object discriminatorValue)
+        {
+            var normalizedValue = NormalizeDiscriminator(discriminatorValue);
+
+            switch (normalizedValue)
+            {
+                case 0:
+                    return typeof(MultiQueryResponseSuccess);
+                case 1:
+                    return typeof(MultiQueryResponseError);
+                default:
+                    throw new JsonException($"Unknown discriminator value: {discriminatorValue}");
+            }
+        }
+
+        private int NormalizeDiscriminator(object discriminatorValue)
+        {
+            switch (discriminatorValue)
+            {
+                case int value:
+                    return value;
+
+                case long value:
+                {
+                    return (int)value;
+                }
+                case string value:
+                {
+                    switch (value)
+                    {
+                        case "0":
+                        case "Success":
+                            return 0;
+                        case "1":
+                        case "Error":
+                            return 1;
+                        default:
+                            throw new JsonException($"Unknown string discriminator: {value}");
+                    }
+                }
+                default:
+                    throw new JsonException(
+                        $"Unsupported discriminator type: {(discriminatorValue != null ? discriminatorValue.GetType().Name : "null")}");
+            }
+        }
+
+        private static object GetDiscriminatorValue(JsonElement element)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Number:
+                    return element.TryGetInt32(out var intValue) ? intValue : element.GetInt64();
+
+                case JsonValueKind.String:
+                    return element.GetString();
+
+                case JsonValueKind.True:
+                    return true;
+
+                case JsonValueKind.False:
+                    return false;
+
+                default:
+                    throw new JsonException($"Unexpected discriminator type: {element.ValueKind}");
+            }
+        }
+
+        /// <summary>
+        /// Create a new JsonSerializerOptions that excludes this converter to avoid infinite recursion
+        /// </summary>
+        private static JsonSerializerOptions CreateOptionsWithoutThisConverter(JsonSerializerOptions originalOptions)
+        {
+            var newOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = originalOptions.PropertyNameCaseInsensitive,
+                PropertyNamingPolicy = originalOptions.PropertyNamingPolicy,
+                WriteIndented = originalOptions.WriteIndented,
+                DictionaryKeyPolicy = originalOptions.DictionaryKeyPolicy,
+            };
+
+            // Copy converters EXCEPT this one
+            foreach (var converter in originalOptions.Converters)
+            {
+                // Skip this converter type to prevent recursion
+                if (converter.GetType() != typeof(MultiQueryResponseConverter))
+                {
+                    newOptions.Converters.Add(converter);
+                }
+            }
+
+            return newOptions;
+        }
+    }
+
+    // /// <summary>
+    // /// Generic polymorphic converter for any type with discriminator in any position
+    // /// </summary>
+    // public class PolymorphicJsonConverter<TBase> : JsonConverter<TBase> where TBase : class
+    // {
+    //     private readonly string _discriminatorPropertyName;
+    //     private readonly Dictionary<object, Type> _discriminatorToType;
+    //
+    //     public PolymorphicJsonConverter(
+    //         string discriminatorPropertyName,
+    //         Dictionary<object, Type> discriminatorToType)
+    //     {
+    //         _discriminatorPropertyName = discriminatorPropertyName ?? throw new ArgumentNullException(nameof(discriminatorPropertyName));
+    //         _discriminatorToType = discriminatorToType ?? throw new ArgumentNullException(nameof(discriminatorToType));
+    //     }
+    //
+    //     public override TBase Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    //     {
+    //         using (var jsonDoc = JsonDocument.ParseValue(ref reader))
+    //         {
+    //             var root = jsonDoc.RootElement;
+    //
+    //             if (!root.TryGetProperty(_discriminatorPropertyName, out var discriminatorElement))
+    //             {
+    //                 throw new JsonException($"Missing required discriminator property '{_discriminatorPropertyName}'");
+    //             }
+    //
+    //             var discriminatorValue = ExtractDiscriminatorValue(discriminatorElement);
+    //
+    //             if (!_discriminatorToType.TryGetValue(discriminatorValue, out var targetType))
+    //             {
+    //                 throw new JsonException(
+    //                     $"Unknown discriminator value: {discriminatorValue}. " +
+    //                     $"Expected one of: {string.Join(", ", _discriminatorToType.Keys)}");
+    //             }
+    //
+    //             var concreteObject = JsonSerializer.Deserialize(
+    //                 root.GetRawText(),
+    //                 targetType,
+    //                 options);
+    //
+    //             return (TBase)concreteObject;
+    //         }
+    //     }
+    //
+    //     public override void Write(Utf8JsonWriter writer, TBase value, JsonSerializerOptions options)
+    //     {
+    //         JsonSerializer.Serialize(writer, (object)value, options);
+    //     }
+    //
+    //     private static object ExtractDiscriminatorValue(JsonElement element)
+    //     {
+    //         switch (element.ValueKind)
+    //         {
+    //             case JsonValueKind.Number:
+    //                 return element.TryGetInt32(out var intValue) ? (object)intValue : element.GetInt64();
+    //             case JsonValueKind.String:
+    //                 return element.GetString();
+    //             case JsonValueKind.True:
+    //                 return true;
+    //             case JsonValueKind.False:
+    //                 return false;
+    //             default:
+    //                 throw new JsonException($"Unexpected discriminator type: {element.ValueKind}");
+    //         }
+    //     }
+    // }
+}
+

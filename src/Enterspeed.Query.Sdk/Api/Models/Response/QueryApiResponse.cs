@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Headers;
+using Enterspeed.Query.Sdk.Api.Models.MultiQuery;
+using Enterspeed.Query.Sdk.Api.Models.Query;
 
 namespace Enterspeed.Query.Sdk.Api.Models
 {
@@ -9,7 +11,7 @@ namespace Enterspeed.Query.Sdk.Api.Models
         public HttpStatusCode StatusCode { get; set; }
         public HttpResponseHeaders Headers { get; set; }
         public string Message { get; set; }
-        public QueryResponse Response { get; set; }
+        public IQueryResponse Response { get; set; }
     }
 
     public class QueryApiResponse<T>
@@ -17,14 +19,14 @@ namespace Enterspeed.Query.Sdk.Api.Models
         public HttpStatusCode StatusCode { get; set; }
         public HttpResponseHeaders Headers { get; set; }
         public string Message { get; set; }
-        public QueryResponse<T> Response { get; set; }
+        public IQueryResponse<T> Response { get; set; }
     }
     public class MultiQueryApiResponse
     {
         public HttpStatusCode StatusCode { get; set; }
         public HttpResponseHeaders Headers { get; set; }
         public string Message { get; set; }
-        public List<MultiQueryResponse> Response { get; set; }
+        public MultiQueryResponseList Response { get; set; }
     }
 
     public class MultiQueryApiResponse<T>
@@ -32,6 +34,6 @@ namespace Enterspeed.Query.Sdk.Api.Models
         public HttpStatusCode StatusCode { get; set; }
         public HttpResponseHeaders Headers { get; set; }
         public string Message { get; set; }
-        public List<MultiQueryResponse<T>> Response { get; set; }
+        public MultiQueryResponseList Response { get; set; }
     }
 }

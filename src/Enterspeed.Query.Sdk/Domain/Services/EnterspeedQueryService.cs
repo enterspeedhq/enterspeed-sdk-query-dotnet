@@ -5,11 +5,14 @@ using Enterspeed.Query.Sdk.Domain.Connection;
 using Enterspeed.Query.Sdk.Domain.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Enterspeed.Query.Sdk.Api.Models.MultiQuery;
+using Enterspeed.Query.Sdk.Api.Models.Query;
 
 namespace Enterspeed.Query.Sdk.Domain.Services
 {
@@ -26,7 +29,8 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             _serializer = jsonSerializer ?? throw new ArgumentNullException(nameof(jsonSerializer));
         }
 
-        public async Task<QueryApiResponse> Query(string apiKey, string index, QueryObject query, CancellationToken? cancellationToken = null)
+        public async Task<QueryApiResponse> Query(string apiKey, string index, QueryObject query,
+            CancellationToken? cancellationToken = null)
         {
             Validate(apiKey);
 
@@ -36,7 +40,8 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             return await QueryApiResponseSingle(apiKey, requestUri, httpContent, cancellationToken);
         }
 
-        public async Task<QueryApiResponse<IContent>> QueryTyped(string apiKey, string index, QueryObject query, CancellationToken? cancellationToken = null)
+        public async Task<QueryApiResponse<IContent>> QueryTyped(string apiKey, string index, QueryObject query,
+            CancellationToken? cancellationToken = null)
         {
             Validate(apiKey);
 
@@ -46,7 +51,8 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             return await QueryApiResponseTypedSingle(apiKey, requestUri, httpContent, cancellationToken);
         }
 
-        public async Task<MultiQueryApiResponse> Query(string apiKey, List<MultiQueryObject> queries, CancellationToken? cancellationToken = null)
+        public async Task<MultiQueryApiResponse> Query(string apiKey, List<MultiQueryObject> queries,
+            CancellationToken? cancellationToken = null)
         {
             Validate(apiKey);
 
@@ -56,7 +62,8 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             return await QueryApiResponseMultiple(apiKey, requestUri, httpContent, cancellationToken);
         }
 
-        public async Task<MultiQueryApiResponse<IContent>> QueryTyped(string apiKey, List<MultiQueryObject> queries, CancellationToken? cancellationToken = null)
+        public async Task<MultiQueryApiResponse<IContent>> QueryTyped(string apiKey, List<MultiQueryObject> queries,
+            CancellationToken? cancellationToken = null)
         {
             Validate(apiKey);
 
@@ -66,13 +73,15 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             return await QueryApiResponseTypedMultiple(apiKey, requestUri, httpContent, cancellationToken);
         }
 
-        private async Task<QueryApiResponse<IContent>> QueryApiResponseTypedSingle(string apiKey, Uri requestUri, HttpContent content, CancellationToken? cancellationToken = null)
+        private async Task<QueryApiResponse<IContent>> QueryApiResponseTypedSingle(string apiKey, Uri requestUri,
+            HttpContent content, CancellationToken? cancellationToken = null)
         {
             content.Headers.Add("X-Api-Key", apiKey);
 
             var response = await PostAsync(requestUri, content, cancellationToken);
             var responseString = await response.Content.ReadAsStringAsync();
 
+            // TODO: Talk about how we want it to return errors in typed responses. Shouldn't it return a object with the errors instead of it in a message
             return new QueryApiResponse<IContent>
             {
                 StatusCode = response.StatusCode,
@@ -86,13 +95,15 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             };
         }
 
-        private async Task<MultiQueryApiResponse<IContent>> QueryApiResponseTypedMultiple(string apiKey, Uri requestUri, HttpContent content, CancellationToken? cancellationToken = null)
+        private async Task<MultiQueryApiResponse<IContent>> QueryApiResponseTypedMultiple(string apiKey, Uri requestUri,
+            HttpContent content, CancellationToken? cancellationToken = null)
         {
             content.Headers.Add("X-Api-Key", apiKey);
 
             var response = await PostAsync(requestUri, content, cancellationToken);
             var responseString = await response.Content.ReadAsStringAsync();
 
+            // TODO: Talk about how we want it to return errors in typed responses. Shouldn't it return a object with the errors instead of it in a message
             return new MultiQueryApiResponse<IContent>
             {
                 StatusCode = response.StatusCode,
@@ -100,16 +111,17 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                     ? _serializer.Deserialize<QueryApiError>(responseString)?.Message
                     : null,
                 Response = response.StatusCode == HttpStatusCode.OK
-                    ? _serializer.Deserialize<List<MultiQueryResponse<IContent>>>(responseString)
+                    ? _serializer.Deserialize<MultiQueryResponseList>(responseString)
                     : null,
                 Headers = response.Headers
             };
         }
 
-        private async Task<QueryApiResponse> QueryApiResponseSingle(string apiKey, Uri requestUri, HttpContent content, CancellationToken? cancellationToken = null)
+        private async Task<QueryApiResponse> QueryApiResponseSingle(string apiKey, Uri requestUri, HttpContent content,
+            CancellationToken? cancellationToken = null)
         {
             content.Headers.Add("X-Api-Key", apiKey);
-            
+
             var response = await PostAsync(requestUri, content, cancellationToken);
             var responseString = await response.Content.ReadAsStringAsync();
 
@@ -126,24 +138,64 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             };
         }
 
-        private async Task<MultiQueryApiResponse> QueryApiResponseMultiple(string apiKey, Uri requestUri, HttpContent content, CancellationToken? cancellationToken = null)
+        private async Task<MultiQueryApiResponse> QueryApiResponseMultiple(string apiKey, Uri requestUri,
+            HttpContent content, CancellationToken? cancellationToken = null)
         {
-            content.Headers.Add("X-Api-Key", apiKey);
-
-            var response = await PostAsync(requestUri, content, cancellationToken);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            return new MultiQueryApiResponse
+            try
             {
-                StatusCode = response.StatusCode,
-                Message = response.StatusCode != HttpStatusCode.OK && !string.IsNullOrWhiteSpace(responseString)
-                    ? _serializer.Deserialize<QueryApiError>(responseString)?.Message
-                    : null,
-                Response = response.StatusCode == HttpStatusCode.OK
-                    ? _serializer.Deserialize<List<MultiQueryResponse>>(responseString)
-                    : null,
-                Headers = response.Headers
-            };
+                content.Headers.Add("X-Api-Key", apiKey);
+                var response = await PostAsync(requestUri, content, cancellationToken);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                // TODO: Rewrite how to return errors from multiple queries
+                if (!response.IsSuccessStatusCode)
+                    // Return if all of them are failed
+                    return new MultiQueryApiResponse
+                    {
+                        StatusCode = response.StatusCode,
+                        Message = "Error",
+                        Response = null,
+                        Headers = response.Headers
+                    };
+
+                var multiq = _serializer.Deserialize<List<MultiQueryResponse>>(responseString);
+                // var response1 = new MultiQueryApiResponse
+                // {
+                //     StatusCode = response.StatusCode,
+                //     Message = string.Join("; ", multiq.GetErrorResponse()
+                //         .SelectMany(x => new[] { x.Message }.Concat(x.Errors ?? Array.Empty<string>()))
+                //         .Where(x => !string
+                //             .IsNullOrEmpty(
+                //                 x))), // Create a list of all of the error messages from Errors or message in MultiQueryResponseError
+                //     Response = multiq,
+                //     Headers = response.Headers
+                // };
+                // multiq.TryGetResults<Book>("Book", out var typedResults1);
+                //
+                // multiq[1].TryGetResults(out var results);
+                // multiq[1].GetResults<Book>(out var typedResults);
+                var response1 = new MultiQueryApiResponse
+                {
+                    StatusCode = response.StatusCode,
+                    Message = string.Join("; ", multiq
+                        .Where(x => x is MultiQueryResponseError)
+                        .Cast<MultiQueryResponseError>()
+                        .SelectMany(x => new[] { x.Message }.Concat(x.Errors ?? Array.Empty<string>()))
+                        .Where(x => !string.IsNullOrEmpty(x))), // Create a list of all of the error messages from Errors or message in MultiQueryResponseError
+                    Response = new MultiQueryResponseList(multiq),
+                    Headers = response.Headers
+                };
+                return response1;
+            }
+
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+            return new MultiQueryApiResponse();
         }
     }
+
+
 }
