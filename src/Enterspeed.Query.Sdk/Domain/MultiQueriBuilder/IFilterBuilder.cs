@@ -85,14 +85,6 @@ namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
         IFilterBuilder In<TValue>(string field, params TValue[] values);
 
         /// <summary>
-        /// Cosmetic separator for readability. Has no functional effect.
-        /// Filters are implicitly ANDed at the top level.
-        /// Use .And(Action) for explicit nested AND groups.
-        /// </summary>
-        /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder And();
-
-        /// <summary>
         /// Creates a nested OR group. Multiple conditions inside the lambda are implicitly ORed.
         /// </summary>
         /// <param name="configure">Lambda expression to configure the OR group filters.</param>

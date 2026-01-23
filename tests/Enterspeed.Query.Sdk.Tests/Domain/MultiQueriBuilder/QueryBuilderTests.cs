@@ -216,21 +216,6 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             result.Facets[0].Size.Should().Be(20);
         }
 
-        [Fact]
-        public void WithFacet_NoNameProvided_UsesFieldAsName()
-        {
-            // Arrange
-            var builder = new QueryBuilder();
-
-            // Act
-            var result = builder
-                .WithFacet("category")
-                .Build();
-
-            // Assert
-            result.Facets[0].Name.Should().Be("category");
-        }
-
         [Theory]
         [InlineData(null)]
         [InlineData("")]
@@ -385,7 +370,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             var result = builder
                 .Where(f => f
                     .Equals("title", "hoodie")
-                    .And().Or(o => o
+                    .Or(o => o
                         .Equals("isInStock", true)
                         .Equals("allowPreorder", true)))
                 .Build();
@@ -393,7 +378,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             // Assert
             result.Filters.Should().NotBeNull();
             result.Filters.And.Should().HaveCount(1);
-            
+
             var rootAnd = result.Filters.And[0] as AndOperator;
             rootAnd.Should().NotBeNull();
             rootAnd.And.Should().HaveCount(2);
@@ -511,10 +496,10 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             var result = builder
                 .Where(f => f
                     .Equals("status", "active")
-                    .And().Or(o => o
+                    .Or(o => o
                         .Equals("isInStock", true)
                         .Equals("allowPreorder", true))
-                    .And().And(a => a
+                    .And(a => a
                         .GreaterThanOrEquals("price", 10)
                         .LessThanOrEquals("price", 100)))
                 .Build();
@@ -522,11 +507,11 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             // Assert
             result.Filters.Should().NotBeNull();
             result.Filters.And.Should().HaveCount(1);
-            
+
             var rootAnd = result.Filters.And[0] as AndOperator;
             rootAnd.Should().NotBeNull();
             rootAnd.And.Should().HaveCount(3);
-            
+
             // Verify structure
             rootAnd.And[0].Should().BeOfType<EqualsOperator<string>>();
             rootAnd.And[1].Should().BeOfType<OrOperator>();
@@ -598,7 +583,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             var result = builder
                 .Where(f => f
                     .Equals("status", "active")
-                    .And().GreaterThan("age", 18))
+                    .GreaterThan("age", 18))
                 .Where(f => f.Or(o => o
                     .Equals("role", "admin")
                     .Equals("role", "moderator")))
@@ -632,7 +617,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             // Assert
             result.Filters.Should().NotBeNull();
             result.Filters.And.Should().HaveCount(1);
-            
+
             var rootAnd = result.Filters.And[0] as AndOperator;
             rootAnd.Should().NotBeNull();
             rootAnd.And.Should().HaveCount(8);

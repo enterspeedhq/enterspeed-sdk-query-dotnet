@@ -414,22 +414,6 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             act.Should().Throw<ArgumentNullException>();
         }
 
-        [Fact]
-        public void And_CosmeticMethod_ReturnsSelf()
-        {
-            // Arrange
-            var builder = new FilterBuilder();
-
-            // Act
-            var result = builder
-                .Equals("status", "active")
-                .And()
-                .GreaterThan("age", 18);
-
-            // Assert
-            result.Should().BeSameAs(builder);
-        }
-
         #endregion
 
         #region Complex Scenario Tests
@@ -443,10 +427,10 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             // Act
             builder
                 .Equals("status", "active")
-                .And().Or(o => o
+                .Or(o => o
                     .Equals("isInStock", true)
                     .Equals("allowPreorder", true))
-                .And().And(a => a
+                .And(a => a
                     .GreaterThan("price", 10)
                     .LessThan("price", 100));
             var result = builder.BuildFilters();
@@ -476,7 +460,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             // Act
             builder
                 .Or(o => o.Equals("type", "A").Equals("type", "B"))
-                .And().Or(o => o.Equals("status", "active").Equals("status", "pending"));
+                .Or(o => o.Equals("status", "active").Equals("status", "pending"));
             var result = builder.BuildFilters();
 
             // Assert
@@ -497,8 +481,8 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             // Act
             builder
                 .Equals("status", "active", caseInsensitive: true)
-                .And().Contains("title", "*hoodie*", caseInsensitive: true)
-                .And().GreaterThan("price", 50);
+                .Contains("title", "*hoodie*", caseInsensitive: true)
+                .GreaterThan("price", 50);
             var result = builder.BuildFilters();
 
             // Assert

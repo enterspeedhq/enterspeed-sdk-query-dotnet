@@ -1,0 +1,270 @@
+using System.Collections.Generic;
+using Enterspeed.Query.Sdk.Api.Models.Response;
+using FluentAssertions;
+using Xunit;
+
+namespace Enterspeed.Query.Sdk.Tests.Api.Models.Response
+{
+    public class FailureResponseTests
+    {
+        [Fact]
+        public void Constructor_WithErrors_InitializesProperties()
+        {
+            // Arrange
+            var errors = new List<QueryError>
+            {
+                new QueryError("Error 1"),
+                new QueryError("Error 2")
+            };
+
+            // Act
+            var response = new FailureResponse(errors);
+
+            // Assert
+            response.Status.Should().BeFalse();
+            response.Errors.Should().HaveCount(2);
+            response.Errors[0].Message.Should().Be("Error 1");
+            response.Errors[1].Message.Should().Be("Error 2");
+        }
+
+        [Fact]
+        public void Constructor_WithNullErrors_InitializesWithDefaultError()
+        {
+            // Act
+            var response = new FailureResponse((List<QueryError>)null);
+
+            // Assert
+            response.Errors.Should().ContainSingle();
+            response.Errors[0].Message.Should().Be("An unknown error occurred");
+        }
+
+        [Fact]
+        public void Constructor_WithEmptyErrors_AddsDefaultError()
+        {
+            // Act
+            var response = new FailureResponse(new List<QueryError>());
+
+            // Assert
+            response.Errors.Should().ContainSingle();
+            response.Errors[0].Message.Should().Be("An unknown error occurred");
+        }
+
+        [Fact]
+        public void Constructor_WithErrorMessage_CreatesError()
+        {
+            // Act
+            var response = new FailureResponse("Test error message");
+
+            // Assert
+            response.Errors.Should().ContainSingle();
+            response.Errors[0].Message.Should().Be("Test error message");
+        }
+
+        [Fact]
+        public void Constructor_WithSingleError_CreatesErrorList()
+        {
+            // Arrange
+            var error = new QueryError("Single error", "ERROR_CODE");
+
+            // Act
+            var response = new FailureResponse(error);
+
+            // Assert
+            response.Errors.Should().ContainSingle();
+            response.Errors[0].Message.Should().Be("Single error");
+            response.Errors[0].Code.Should().Be("ERROR_CODE");
+        }
+
+        [Fact]
+        public void Status_AlwaysReturnsFalse()
+        {
+            // Arrange
+            var response = new FailureResponse("Error");
+
+            // Act & Assert
+            response.Status.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Errors_ReturnsReadOnlyList()
+        {
+            // Arrange
+            var errors = new List<QueryError> { new QueryError("Test") };
+            var response = new FailureResponse(errors);
+
+            // Act
+            var errorsList = response.Errors;
+
+            // Assert
+            errorsList.Should().BeAssignableTo<IReadOnlyList<QueryError>>();
+        }
+
+        [Fact]
+        public void ImplementsIFailure()
+        {
+            // Arrange
+            var response = new FailureResponse("Error");
+
+            // Assert
+            response.Should().BeAssignableTo<IFailure>();
+            response.Should().BeAssignableTo<IResponse>();
+        }
+    }
+
+    public class FailureResponseTypedTests
+    {
+        private class TestData
+        {
+            public string Value { get; set; }
+        }
+
+        [Fact]
+        public void Constructor_WithErrors_InitializesProperties()
+        {
+            // Arrange
+            var errors = new List<QueryError>
+            {
+                new QueryError("Error 1"),
+                new QueryError("Error 2")
+            };
+
+            // Act
+            var response = new FailureResponseTyped<TestData>(errors);
+
+            // Assert
+            response.Status.Should().BeFalse();
+            response.Errors.Should().HaveCount(2);
+        }
+
+        [Fact]
+        public void Constructor_WithNullErrors_InitializesWithDefaultError()
+        {
+            // Act
+            var response = new FailureResponseTyped<TestData>((List<QueryError>)null);
+
+            // Assert
+            response.Errors.Should().ContainSingle();
+            response.Errors[0].Message.Should().Be("An unknown error occurred");
+        }
+
+        [Fact]
+        public void Constructor_WithEmptyErrors_AddsDefaultError()
+        {
+            // Act
+            var response = new FailureResponseTyped<TestData>(new List<QueryError>());
+
+            // Assert
+            response.Errors.Should().ContainSingle();
+        }
+
+        [Fact]
+        public void Constructor_WithErrorMessage_CreatesError()
+        {
+            // Act
+            var response = new FailureResponseTyped<TestData>("Test error");
+
+            // Assert
+            response.Errors.Should().ContainSingle();
+            response.Errors[0].Message.Should().Be("Test error");
+        }
+
+        [Fact]
+        public void Constructor_WithSingleError_CreatesErrorList()
+        {
+            // Arrange
+            var error = new QueryError("Single error", "ERROR_CODE");
+
+            // Act
+            var response = new FailureResponseTyped<TestData>(error);
+
+            // Assert
+            response.Errors.Should().ContainSingle();
+            response.Errors[0].Code.Should().Be("ERROR_CODE");
+        }
+
+        [Fact]
+        public void Status_AlwaysReturnsFalse()
+        {
+            // Arrange
+            var response = new FailureResponseTyped<TestData>("Error");
+
+            // Act & Assert
+            response.Status.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Errors_ReturnsReadOnlyList()
+        {
+            // Arrange
+            var errors = new List<QueryError> { new QueryError("Test") };
+            var response = new FailureResponseTyped<TestData>(errors);
+
+            // Act
+            var errorsList = response.Errors;
+
+            // Assert
+            errorsList.Should().BeAssignableTo<IReadOnlyList<QueryError>>();
+        }
+
+        [Fact]
+        public void ImplementsIResponseOfT()
+        {
+            // Arrange
+            var response = new FailureResponseTyped<TestData>("Error");
+
+            // Assert
+            response.Should().BeAssignableTo<IResponse<TestData>>();
+            response.Should().BeAssignableTo<IResponse>();
+        }
+    }
+
+    public class QueryErrorTests
+    {
+        [Fact]
+        public void Constructor_Default_InitializesEmptyDetails()
+        {
+            // Act
+            var error = new QueryError();
+
+            // Assert
+            error.Details.Should().NotBeNull();
+            error.Details.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void Constructor_WithMessage_SetsMessage()
+        {
+            // Act
+            var error = new QueryError("Test message");
+
+            // Assert
+            error.Message.Should().Be("Test message");
+            error.Details.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Constructor_WithMessageAndCode_SetsBoth()
+        {
+            // Act
+            var error = new QueryError("Test message", "TEST_CODE");
+
+            // Assert
+            error.Message.Should().Be("Test message");
+            error.Code.Should().Be("TEST_CODE");
+            error.Details.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Details_CanBeModified()
+        {
+            // Arrange
+            var error = new QueryError("Test");
+
+            // Act
+            error.Details["key"] = "value";
+
+            // Assert
+            error.Details["key"].Should().Be("value");
+        }
+    }
+}

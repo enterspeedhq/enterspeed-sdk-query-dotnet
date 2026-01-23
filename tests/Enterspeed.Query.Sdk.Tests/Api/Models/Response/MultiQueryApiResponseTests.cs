@@ -1,0 +1,814 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Mime;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Enterspeed.Query.Sdk.Api.Models;
+using Enterspeed.Query.Sdk.Api.Models.MultiQuery;
+using Enterspeed.Query.Sdk.Api.Models.Query;
+using Enterspeed.Query.Sdk.Api.Models.Response;
+using Enterspeed.Query.Sdk.Api.Providers;
+using Enterspeed.Query.Sdk.Api.Services;
+using Enterspeed.Query.Sdk.Configuration;
+using Enterspeed.Query.Sdk.Domain.Connection;
+using Enterspeed.Query.Sdk.Domain.Models;
+using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
+using Enterspeed.Query.Sdk.Domain.Services;
+using Enterspeed.Query.Sdk.Domain.SystemTextJson;
+using FluentAssertions;
+using Moq;
+using Moq.Protected;
+using Xunit;
+
+namespace Enterspeed.Query.Sdk.Tests.Api.Models.Response
+{
+    public class MultiQueryApiResponseTests
+    {
+        private class TestBook
+        {
+            public string Title { get; set; }
+            public string Author { get; set; }
+            public int Year { get; set; }
+        }
+
+        private class TestAuthor
+        {
+            public string Name { get; set; }
+            public string Country { get; set; }
+        }
+
+        [Fact]
+        public void Get_WithNullQueryName_ReturnsFailure()
+        {
+            // Arrange
+            var response = new MultiQueryApiResponse
+            {
+                Response = new MultiQueryResponseList()
+            };
+
+            // Act
+            var result = response.Get<TestBook>(null);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Status.Should().BeFalse();
+            
+            var failure = result as FailureResponseTyped<TestBook>;
+            failure.Should().NotBeNull();
+            failure.Errors.Should().ContainSingle();
+            failure.Errors[0].Code.Should().Be("INVALID_QUERY_NAME");
+        }
+
+        [Fact]
+        public void Get_WithEmptyQueryName_ReturnsFailure()
+        {
+            // Arrange
+            var response = new MultiQueryApiResponse
+            {
+                Response = new MultiQueryResponseList()
+            };
+
+            // Act
+            var result = response.Get<TestBook>("");
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Status.Should().BeFalse();
+            
+            var failure = result as FailureResponseTyped<TestBook>;
+            failure.Should().NotBeNull();
+            failure.Errors[0].Code.Should().Be("INVALID_QUERY_NAME");
+        }
+
+        [Fact]
+        public void Get_WithNullResponseList_ReturnsFailure()
+        {
+            // Arrange
+            var response = new MultiQueryApiResponse
+            {
+                Response = null
+            };
+
+            // Act
+            var result = response.Get<TestBook>("books");
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Status.Should().BeFalse();
+            
+            var failure = result as FailureResponseTyped<TestBook>;
+            failure.Should().NotBeNull();
+            failure.Errors[0].Code.Should().Be("NO_RESPONSE");
+        }
+
+        [Fact]
+        public void Get_WithMissingQueryKey_ReturnsFailure()
+        {
+            // Arrange
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>());
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var result = response.Get<TestBook>("nonexistent");
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Status.Should().BeFalse();
+            
+            var failure = result as FailureResponseTyped<TestBook>;
+            failure.Should().NotBeNull();
+            failure.Errors[0].Code.Should().Be("QUERY_NOT_FOUND");
+            failure.Errors[0].Message.Should().Contain("nonexistent");
+        }
+
+        [Fact]
+        public void Get_WithErrorResponse_ReturnsFailure()
+        {
+            // Arrange
+            var errorResponse = new MultiQueryResponseError
+            {
+                Name = "books",
+                Index = "books-index",
+                Message = "Query execution failed",
+                Errors = new[] { "Invalid filter", "Timeout occurred" }
+            };
+
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse> { errorResponse });
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var result = response.Get<TestBook>("books");
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Status.Should().BeFalse();
+            
+            var failure = result as FailureResponseTyped<TestBook>;
+            failure.Should().NotBeNull();
+            failure.Errors.Should().HaveCount(3); // Message + 2 errors
+            failure.Errors.Should().Contain(e => e.Message == "Query execution failed");
+            failure.Errors.Should().Contain(e => e.Message == "Invalid filter");
+            failure.Errors.Should().Contain(e => e.Message == "Timeout occurred");
+        }
+
+        [Fact]
+        public void Get_WithSuccessResponse_ReturnsSuccess()
+        {
+            // Arrange
+            var successResponse = new MultiQueryResponseSuccess
+            {
+                Name = "books",
+                Index = "books-index",
+                TotalResults = 2,
+                Results = new List<Dictionary<string, object>>
+                {
+                    new Dictionary<string, object>
+                    {
+                        { "title", "Book 1" },
+                        { "author", "Author 1" },
+                        { "year", 2021 }
+                    },
+                    new Dictionary<string, object>
+                    {
+                        { "title", "Book 2" },
+                        { "author", "Author 2" },
+                        { "year", 2022 }
+                    }
+                }
+            };
+
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse> { successResponse });
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var result = response.Get<TestBook>("books");
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Status.Should().BeTrue();
+            
+            var success = result as ISuccess<TestBook>;
+            success.Should().NotBeNull();
+            success.TotalResults.Should().Be(2);
+            success.Results.Should().HaveCount(2);
+            success.Results[0].Title.Should().Be("Book 1");
+            success.Results[1].Author.Should().Be("Author 2");
+        }
+
+        [Fact]
+        public void Get_WithSuccessResponse_ValueReturnsFirstResult()
+        {
+            // Arrange
+            var successResponse = new MultiQueryResponseSuccess
+            {
+                Name = "books",
+                Index = "books-index",
+                TotalResults = 2,
+                Results = new List<Dictionary<string, object>>
+                {
+                    new Dictionary<string, object>
+                    {
+                        { "title", "First Book" },
+                        { "author", "First Author" },
+                        { "year", 2021 }
+                    },
+                    new Dictionary<string, object>
+                    {
+                        { "title", "Second Book" },
+                        { "author", "Second Author" },
+                        { "year", 2022 }
+                    }
+                }
+            };
+
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse> { successResponse });
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var result = response.Get<TestBook>("books");
+            var success = result as ISuccess<TestBook>;
+            var firstBook = success.Value();
+
+            // Assert
+            firstBook.Should().NotBeNull();
+            firstBook.Title.Should().Be("First Book");
+            firstBook.Author.Should().Be("First Author");
+        }
+
+        [Fact]
+        public void Get_WithMultipleQueries_ReturnsIndependentResponses()
+        {
+            // Arrange
+            var booksResponse = new MultiQueryResponseSuccess
+            {
+                Name = "books",
+                Index = "books-index",
+                TotalResults = 1,
+                Results = new List<Dictionary<string, object>>
+                {
+                    new Dictionary<string, object>
+                    {
+                        { "title", "Test Book" },
+                        { "author", "Test Author" },
+                        { "year", 2021 }
+                    }
+                }
+            };
+
+            var authorsResponse = new MultiQueryResponseSuccess
+            {
+                Name = "authors",
+                Index = "authors-index",
+                TotalResults = 1,
+                Results = new List<Dictionary<string, object>>
+                {
+                    new Dictionary<string, object>
+                    {
+                        { "name", "Test Author" },
+                        { "country", "Denmark" }
+                    }
+                }
+            };
+
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse> 
+            { 
+                booksResponse, 
+                authorsResponse 
+            });
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var booksResult = response.Get<TestBook>("books");
+            var authorsResult = response.Get<TestAuthor>("authors");
+
+            // Assert
+            booksResult.Status.Should().BeTrue();
+            authorsResult.Status.Should().BeTrue();
+            
+            var booksSuccess = booksResult as ISuccess<TestBook>;
+            booksSuccess.Results[0].Title.Should().Be("Test Book");
+            
+            var authorsSuccess = authorsResult as ISuccess<TestAuthor>;
+            authorsSuccess.Results[0].Name.Should().Be("Test Author");
+        }
+
+        [Fact]
+        public void Get_WithPartialFailure_IndependentQueriesNotAffected()
+        {
+            // Arrange
+            var successResponse = new MultiQueryResponseSuccess
+            {
+                Name = "books",
+                Index = "books-index",
+                TotalResults = 1,
+                Results = new List<Dictionary<string, object>>
+                {
+                    new Dictionary<string, object>
+                    {
+                        { "title", "Test Book" },
+                        { "author", "Test Author" },
+                        { "year", 2021 }
+                    }
+                }
+            };
+
+            var errorResponse = new MultiQueryResponseError
+            {
+                Name = "authors",
+                Index = "authors-index",
+                Message = "Query failed"
+            };
+
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse> 
+            { 
+                successResponse, 
+                errorResponse 
+            });
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var booksResult = response.Get<TestBook>("books");
+            var authorsResult = response.Get<TestAuthor>("authors");
+
+            // Assert
+            booksResult.Status.Should().BeTrue("books query should succeed");
+            authorsResult.Status.Should().BeFalse("authors query should fail");
+            
+            var booksSuccess = booksResult as ISuccess<TestBook>;
+            booksSuccess.Should().NotBeNull();
+            
+            var authorsFailure = authorsResult as FailureResponseTyped<TestAuthor>;
+            authorsFailure.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Get_CachesResultsPerQueryAndType()
+        {
+            // Arrange
+            var successResponse = new MultiQueryResponseSuccess
+            {
+                Name = "books",
+                Index = "books-index",
+                TotalResults = 1,
+                Results = new List<Dictionary<string, object>>
+                {
+                    new Dictionary<string, object>
+                    {
+                        { "title", "Test Book" },
+                        { "author", "Test Author" },
+                        { "year", 2021 }
+                    }
+                }
+            };
+
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse> { successResponse });
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var result1 = response.Get<TestBook>("books");
+            var result2 = response.Get<TestBook>("books");
+
+            // Assert
+            result1.Should().BeSameAs(result2, "results should be cached");
+        }
+
+        [Fact]
+        public void ContainsQuery_WithExistingSuccessQuery_ReturnsTrue()
+        {
+            // Arrange
+            var successResponse = new MultiQueryResponseSuccess
+            {
+                Name = "books",
+                Index = "books-index"
+            };
+
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse> { successResponse });
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var contains = response.ContainsQuery("books");
+
+            // Assert
+            contains.Should().BeTrue();
+        }
+
+        [Fact]
+        public void ContainsQuery_WithExistingErrorQuery_ReturnsTrue()
+        {
+            // Arrange
+            var errorResponse = new MultiQueryResponseError
+            {
+                Name = "books",
+                Index = "books-index"
+            };
+
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse> { errorResponse });
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var contains = response.ContainsQuery("books");
+
+            // Assert
+            contains.Should().BeTrue();
+        }
+
+        [Fact]
+        public void ContainsQuery_WithNonExistingQuery_ReturnsFalse()
+        {
+            // Arrange
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>());
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var contains = response.ContainsQuery("nonexistent");
+
+            // Assert
+            contains.Should().BeFalse();
+        }
+
+        [Fact]
+        public void GetQueryNames_WithMultipleQueries_ReturnsAllNames()
+        {
+            // Arrange
+            var responses = new List<MultiQueryResponse>
+            {
+                new MultiQueryResponseSuccess { Name = "books", Index = "books-index" },
+                new MultiQueryResponseSuccess { Name = "authors", Index = "authors-index" },
+                new MultiQueryResponseError { Name = "categories", Index = "categories-index" }
+            };
+
+            var responseList = new MultiQueryResponseList(responses);
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var names = response.GetQueryNames();
+
+            // Assert
+            names.Should().HaveCount(3);
+            names.Should().Contain("books");
+            names.Should().Contain("authors");
+            names.Should().Contain("categories");
+        }
+
+        [Fact]
+        public void GetQueryNames_WithEmptyResponse_ReturnsEmptyList()
+        {
+            // Arrange
+            var response = new MultiQueryApiResponse
+            {
+                Response = null
+            };
+
+            // Act
+            var names = response.GetQueryNames();
+
+            // Assert
+            names.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void Get_WithFacets_ReturnsFacetsInSuccess()
+        {
+            // Arrange
+            var successResponse = new MultiQueryResponseSuccess
+            {
+                Name = "books",
+                Index = "books-index",
+                TotalResults = 1,
+                Results = new List<Dictionary<string, object>>
+                {
+                    new Dictionary<string, object> { { "title", "Test" } }
+                },
+                Facets = new List<FacetResult>
+                {
+                    new FacetResult
+                    {
+                        Name = "year",
+                        Groups = new List<FacetGroup>
+                        {
+                            new FacetGroup { Value = "2021", Count = 5 },
+                            new FacetGroup { Value = "2022", Count = 3 }
+                        }
+                    }
+                }
+            };
+
+            var responseList = new MultiQueryResponseList(new List<MultiQueryResponse> { successResponse });
+            var response = new MultiQueryApiResponse
+            {
+                Response = responseList
+            };
+
+            // Act
+            var result = response.Get<TestBook>("books");
+
+            // Assert
+            result.Status.Should().BeTrue();
+            var success = result as ISuccess<TestBook>;
+            success.Facets.Should().HaveCount(1);
+            success.Facets[0].Name.Should().Be("year");
+            success.Facets[0].Groups.Should().HaveCount(2);
+        }
+
+        #region End-to-End Flow Validation Tests
+
+        [Fact]
+        public async Task CompleteFlow_BuildQuery_MockCall_ValidateTypedResults()
+        {
+            // This test validates the complete flow:
+            // 1. Build a multi-query using the fluent builder
+            // 2. Make the API call with mocked HTTP response
+            // 3. Validate the typed results can be retrieved correctly
+
+            // STEP 1: Build multi-query request using fluent builder
+            var request = new MultiQueryBuilder()
+                .AddQuery("books", "book-index", builder => builder
+                    .Where(f => f.Equals("category", "fiction"))
+                    .WithPagination(0, 10))
+                .AddQuery("authors", "author-index", builder => builder
+                    .Where(f => f.GreaterThan("bookCount", "5"))
+                    .WithPagination(0, 5))
+                .Build();
+
+            // Validate request structure
+            request.Should().NotBeNull();
+            request.Queries.Should().HaveCount(2);
+            request.Queries.Should().Contain(q => q.Name == "books" && q.Index == "book-index");
+            request.Queries.Should().Contain(q => q.Name == "authors" && q.Index == "author-index");
+
+            // STEP 2: Mock the API HTTP call
+            var serializer = new SystemTextJsonSerializer();
+            var mockHttpHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            
+            // Create realistic API response matching Enterspeed's multi-query format
+            var apiResponse = new List<object>
+            {
+                new
+                {
+                    index = "book-index",
+                    name = "books",
+                    totalResults = 2,
+                    status = 0,  // Success
+                    results = new[]
+                    {
+                        new
+                        {
+                            title = "The Great Novel",
+                            author = "Jane Doe",
+                            year = 2023
+                        },
+                        new
+                        {
+                            title = "Another Story",
+                            author = "John Smith",
+                            year = 2024
+                        }
+                    },
+                    facets = new object[] { }
+                },
+                new
+                {
+                    index = "author-index",
+                    name = "authors",
+                    totalResults = 1,
+                    status = 0,  // Success
+                    results = new[]
+                    {
+                        new
+                        {
+                            name = "Jane Doe",
+                            country = "USA"
+                        }
+                    },
+                    facets = new object[] { }
+                }
+            };
+
+            var responseJson = serializer.Serialize(apiResponse);
+
+            mockHttpHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
+                });
+
+            // Setup service with mocked HTTP client
+            var config = new EnterspeedQueryConfiguration();
+            var configProvider = new EnterspeedQueryConfigurationProvider(config);
+            var httpClient = new HttpClient(mockHttpHandler.Object)
+            {
+                BaseAddress = new System.Uri(config.BaseUrl)
+            };
+
+            var queryConnection = new EnterspeedQueryConnection(configProvider);
+            
+            // Inject mocked HttpClient using reflection
+            var httpClientField = typeof(EnterspeedQueryConnection)
+                .GetField("_httpClientConnection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var connectionEstablishedDateField = typeof(EnterspeedQueryConnection)
+                .GetField("_connectionEstablishedDate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            httpClientField?.SetValue(queryConnection, httpClient);
+            connectionEstablishedDateField?.SetValue(queryConnection, System.DateTime.Now);
+
+            var queryService = new EnterspeedQueryService(queryConnection, configProvider, serializer);
+
+            // Execute the query
+            var response = await queryService.Query("test-api-key", request.Queries.ToList(), CancellationToken.None);
+
+            // STEP 3: Validate the API response structure
+            response.Should().NotBeNull();
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            response.Response.Should().NotBeNull();
+
+            // STEP 4: Validate typed results retrieval using the fluent API
+            var booksResponse = response.Get<TestBook>("books");
+            booksResponse.Should().NotBeNull();
+            booksResponse.Status.Should().BeTrue("books query should succeed");
+
+            // Validate ISuccess<T> interface
+            var booksSuccess = booksResponse as ISuccess<TestBook>;
+            booksSuccess.Should().NotBeNull();
+            booksSuccess.TotalResults.Should().Be(2);
+            booksSuccess.Results.Should().HaveCount(2);
+            
+            // Validate strongly-typed data
+            booksSuccess.Results[0].Title.Should().Be("The Great Novel");
+            booksSuccess.Results[0].Author.Should().Be("Jane Doe");
+            booksSuccess.Results[0].Year.Should().Be(2023);
+            
+            booksSuccess.Results[1].Title.Should().Be("Another Story");
+            booksSuccess.Results[1].Author.Should().Be("John Smith");
+            booksSuccess.Results[1].Year.Should().Be(2024);
+
+            // Validate second query
+            var authorsResponse = response.Get<TestAuthor>("authors");
+            authorsResponse.Should().NotBeNull();
+            authorsResponse.Status.Should().BeTrue("authors query should succeed");
+
+            var authorsSuccess = authorsResponse as ISuccess<TestAuthor>;
+            authorsSuccess.Should().NotBeNull();
+            authorsSuccess.TotalResults.Should().Be(1);
+            authorsSuccess.Results.Should().HaveCount(1);
+            authorsSuccess.Results[0].Name.Should().Be("Jane Doe");
+            authorsSuccess.Results[0].Country.Should().Be("USA");
+
+            // Validate caching - subsequent calls should return same instance
+            var booksResponseCached = response.Get<TestBook>("books");
+            booksResponseCached.Should().BeSameAs(booksResponse, "responses should be cached");
+
+            // Validate helper methods
+            response.ContainsQuery("books").Should().BeTrue();
+            response.ContainsQuery("authors").Should().BeTrue();
+            response.ContainsQuery("nonexistent").Should().BeFalse();
+
+            var queryNames = response.GetQueryNames();
+            queryNames.Should().HaveCount(2);
+            queryNames.Should().Contain("books");
+            queryNames.Should().Contain("authors");
+        }
+
+        [Fact]
+        public async Task CompleteFlow_WithPartialFailure_ValidatesIndependentResults()
+        {
+            // Validates that one failing query doesn't affect other successful queries
+
+            // STEP 1: Build request
+            var request = new MultiQueryBuilder()
+                .AddQuery("valid-query", "valid-index", builder => builder.WithPagination(0, 10))
+                .AddQuery("invalid-query", "invalid-index", builder => builder.WithPagination(0, 10))
+                .Build();
+
+            // STEP 2: Mock API with one success, one error
+            var serializer = new SystemTextJsonSerializer();
+            var mockHttpHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            
+            var apiResponse = new List<object>
+            {
+                new
+                {
+                    index = "valid-index",
+                    name = "valid-query",
+                    totalResults = 1,
+                    status = 0,  // Success
+                    results = new[]
+                    {
+                        new { title = "Valid Book", author = "Valid Author", year = 2024 }
+                    },
+                    facets = new object[] { }
+                },
+                new
+                {
+                    index = "invalid-index",
+                    name = "invalid-query",
+                    status = 1,  // Error
+                    message = "Index not found",
+                    errors = new[] { "The specified index does not exist" }
+                }
+            };
+
+            var responseJson = serializer.Serialize(apiResponse);
+
+            mockHttpHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
+                });
+
+            // Setup service
+            var config = new EnterspeedQueryConfiguration();
+            var configProvider = new EnterspeedQueryConfigurationProvider(config);
+            var httpClient = new HttpClient(mockHttpHandler.Object)
+            {
+                BaseAddress = new System.Uri(config.BaseUrl)
+            };
+
+            var queryConnection = new EnterspeedQueryConnection(configProvider);
+            var httpClientField = typeof(EnterspeedQueryConnection)
+                .GetField("_httpClientConnection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var connectionEstablishedDateField = typeof(EnterspeedQueryConnection)
+                .GetField("_connectionEstablishedDate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            httpClientField?.SetValue(queryConnection, httpClient);
+            connectionEstablishedDateField?.SetValue(queryConnection, System.DateTime.Now);
+
+            var queryService = new EnterspeedQueryService(queryConnection, configProvider, serializer);
+
+            // Execute
+            var response = await queryService.Query("test-api-key", request.Queries.ToList(), CancellationToken.None);
+
+            // STEP 3: Validate independent results
+            response.Should().NotBeNull();
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            // Valid query should succeed
+            var validResponse = response.Get<TestBook>("valid-query");
+            validResponse.Status.Should().BeTrue();
+            var validSuccess = validResponse as ISuccess<TestBook>;
+            validSuccess.Results.Should().HaveCount(1);
+            validSuccess.Results[0].Title.Should().Be("Valid Book");
+
+            // Invalid query should fail with proper error details
+            var invalidResponse = response.Get<TestBook>("invalid-query");
+            invalidResponse.Status.Should().BeFalse();
+            var invalidFailure = invalidResponse as FailureResponseTyped<TestBook>;
+            invalidFailure.Should().NotBeNull();
+            invalidFailure.Errors.Should().NotBeEmpty();
+            invalidFailure.Errors.Should().Contain(e => e.Message.Contains("Index not found"));
+            invalidFailure.Errors.Should().Contain(e => e.Message.Contains("The specified index does not exist"));
+        }
+
+        #endregion
+    }
+}

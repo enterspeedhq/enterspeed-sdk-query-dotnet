@@ -113,7 +113,7 @@ Create complex nested filter logic with OR and AND groups:
 var query = new QueryBuilder()
     .Where(f => f
         .Equals("title", "hoodie")
-        .And().Or(o => o
+        .Or(o => o
             .Equals("isInStock", true)
             .Equals("allowPreorder", true)))
     .Build();
@@ -131,10 +131,10 @@ var query = new QueryBuilder()
 var query = new QueryBuilder()
     .Where(f => f
         .Equals("status", "active")
-        .And().Or(o => o
+        .Or(o => o
             .Equals("type", "A")
             .Equals("type", "B"))
-        .And().And(a => a
+        .And(a => a
             .GreaterThan("score", 50)
             .LessThan("score", 100)))
     .Build();
@@ -149,7 +149,7 @@ var query = new QueryBuilder()
     .SortBy("title", SortOrder.Asc)
     .Where(f => f
         .Equals("isActive", true)
-        .And().Or(o => o
+        .Or(o => o
             .Equals("isGlobal", true)
             .In("category", "selected category 1", "selected category 2")))
     .WithFacet("tags", name: "Tags", size: 3)

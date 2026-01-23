@@ -13,7 +13,6 @@ namespace Enterspeed.Query.Sdk.Api.Extensions
         public static IServiceCollection AddEnterspeedQueryService(this IServiceCollection services, EnterspeedQueryConfiguration enterspeedQueryConfiguration = null)
         {
             services.AddTransient<IEnterspeedQueryService, EnterspeedQueryService>();
-            //services.AddHttpClient<IEnterspeedQueryService>(); TODO: Configure service here instead
             services.AddTransient<IJsonSerializer, SystemTextJsonSerializer>();
             services.AddTransient<EnterspeedQueryConnection>();
             services.AddSingleton<IEnterspeedQueryConfigurationProvider>(new EnterspeedQueryConfigurationProvider(enterspeedQueryConfiguration ?? new EnterspeedQueryConfiguration()));

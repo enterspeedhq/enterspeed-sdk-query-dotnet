@@ -27,13 +27,14 @@ namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
         /// <summary>
         /// Adds filters using a fluent lambda-based builder pattern.
         /// Multiple Where() calls accumulate with implicit AND logic.
+        /// Filters within a single Where() call are also implicitly ANDed.
         /// </summary>
         /// <param name="configure">Lambda expression to configure filter conditions.</param>
         /// <returns>The query builder for method chaining.</returns>
         /// <example>
         /// .Where(f => f
         ///     .Equals("status", "active")
-        ///     .And().GreaterThan("age", 18))
+        ///     .GreaterThan("age", 18))
         /// </example>
         IQueryBuilder Where(Action<IFilterBuilder> configure);
 

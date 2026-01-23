@@ -40,16 +40,5 @@ namespace Enterspeed.Query.Sdk.Api.Services
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         Task<MultiQueryApiResponse> Query(string apiKey, List<MultiQueryObject> queries, CancellationToken? cancellationToken = null);
-
-        /// <summary>
-        /// Creates a multi query request.
-        /// Note: The maximum queries in one request is limited to 5. <br/>
-        /// <a href="https://docs.enterspeed.com/api#tag/Query/operation/queryMultiContentPost">Read more</a>
-        /// </summary>
-        /// <param name="apiKey">API key to validate your environment. Example: environment-1637c4d0-e878-4738-b866-152106a4f88c</param>
-        /// <param name="queries">Will be turned in to the request body when posted</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        Task<MultiQueryApiResponse<IContent>> QueryTyped(string apiKey, List<MultiQueryObject> queries, CancellationToken? cancellationToken = null);
     }
 }

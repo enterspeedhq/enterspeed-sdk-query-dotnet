@@ -70,12 +70,6 @@ namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
             return this;
         }
 
-        public IFilterBuilder And()
-        {
-            // Cosmetic only - filters are implicitly ANDed at the top level
-            return this;
-        }
-
         public IFilterBuilder Or(Action<IFilterBuilder> configure)
         {
             if (configure == null)
