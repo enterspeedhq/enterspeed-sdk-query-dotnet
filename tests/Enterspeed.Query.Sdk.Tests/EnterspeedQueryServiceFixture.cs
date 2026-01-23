@@ -14,6 +14,7 @@ using Enterspeed.Query.Sdk.Api.Services;
 using Enterspeed.Query.Sdk.Configuration;
 using Enterspeed.Query.Sdk.Domain.Connection;
 using Enterspeed.Query.Sdk.Domain.Models;
+using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
 using Enterspeed.Query.Sdk.Domain.Services;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;
 using FluentAssertions;
@@ -105,11 +106,10 @@ public class EnterspeedQueryServiceTests
             })
             .Verifiable();
 
-        var query = new QueryObject
-        {
-            Sort = new List<Sort>{ new() { Field = "_updatedAt", Order = SortOrder.Desc }},
-            Pagination = new Pagination { Page = 0, PageSize = 10 }
-        };
+        var query = new QueryBuilder()
+            .SortBy("_updatedAt", SortOrder.Desc)
+            .WithPagination(0, 10)
+            .Build();
 
         // Act
         var result = await _queryService.Query("environment-guid", "testIndex", query, CancellationToken.None);

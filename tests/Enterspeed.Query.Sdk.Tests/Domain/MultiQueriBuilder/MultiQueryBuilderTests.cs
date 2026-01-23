@@ -1,6 +1,7 @@
 using System;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
+using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
 using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
 using FluentAssertions;
 using Xunit;
@@ -488,7 +489,10 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             // Verify second query
             var recentOrdersQuery = request.Queries[1];
             recentOrdersQuery.Name.Should().Be("recentOrders");
-            recentOrdersQuery.Filters.And.Should().HaveCount(2);
+            recentOrdersQuery.Filters.And.Should().HaveCount(1);
+            recentOrdersQuery.Filters.And[0].Should().BeOfType<AndOperator>();
+            var andOp = (AndOperator)recentOrdersQuery.Filters.And[0];
+            andOp.And.Should().HaveCount(2);
 
             // Verify third query (pre-constructed)
             var popularProductsQuery = request.Queries[2];

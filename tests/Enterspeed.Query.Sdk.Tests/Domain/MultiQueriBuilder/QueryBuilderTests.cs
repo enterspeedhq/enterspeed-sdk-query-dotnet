@@ -1,6 +1,7 @@
 using System;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
+using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
 using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
 using FluentAssertions;
 using Xunit;
@@ -56,7 +57,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
 
             // Assert
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Page must be non-negative*");
+                .WithMessage("*Page number must be non-negative*");
         }
 
         [Theory]
@@ -72,7 +73,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
 
             // Assert
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Page size must be at least 1*");
+                .WithMessage("*Page size must be positive*");
         }
 
         [Fact]
@@ -126,7 +127,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
 
             // Assert
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Field cannot be null or empty*");
+                .WithMessage("*Field name cannot be null or whitespace*");
         }
 
         [Fact]
@@ -154,7 +155,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             var builder = new QueryBuilder();
 
             // Act
-            Action act = () => builder.Where(null);
+            Action act = () => builder.Where((FilterOperator)null);
 
             // Assert
             act.Should().Throw<ArgumentNullException>();
@@ -175,23 +176,25 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
 
             // Assert
             result.Filters.Should().NotBeNull();
-            result.Filters.And.Should().HaveCount(2);
-            result.Filters.And.Should().Contain(filter1);
-            result.Filters.And.Should().Contain(filter2);
+            result.Filters.And.Should().HaveCount(1);
+            result.Filters.And[0].Should().BeOfType<AndOperator>();
+            var andOp = (AndOperator)result.Filters.And[0];
+            andOp.And.Should().HaveCount(2);
+            andOp.And.Should().Contain(filter1);
+            andOp.And.Should().Contain(filter2);
         }
 
         [Fact]
-        public void WhereAll_NoFilters_ThrowsArgumentException()
+        public void WhereAll_NoFilters_DoesNotThrow()
         {
             // Arrange
             var builder = new QueryBuilder();
 
             // Act
-            Action act = () => builder.WhereAll();
+            var result = builder.WhereAll().Build();
 
             // Assert
-            act.Should().Throw<ArgumentException>()
-                .WithMessage("*At least one filter must be provided*");
+            result.Filters.Should().BeNull();
         }
 
         [Fact]
@@ -242,7 +245,7 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
 
             // Assert
             act.Should().Throw<ArgumentException>()
-                .WithMessage("*Field cannot be null or empty*");
+                .WithMessage("*Field name cannot be null or whitespace*");
         }
 
         [Fact]
@@ -263,17 +266,16 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
         }
 
         [Fact]
-        public void WithAliases_NoAliases_ThrowsArgumentException()
+        public void WithAliases_NoAliases_DoesNotThrow()
         {
             // Arrange
             var builder = new QueryBuilder();
 
             // Act
-            Action act = () => builder.WithAliases();
+            var result = builder.WithAliases().Build();
 
             // Assert
-            act.Should().Throw<ArgumentException>()
-                .WithMessage("*At least one alias must be provided*");
+            result.Aliases.Should().BeNullOrEmpty();
         }
 
         [Fact]
@@ -317,5 +319,326 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
             // Assert
             result.Should().NotBeNull();
         }
+
+        #region Lambda-Based Where() Tests
+
+        [Fact]
+        public void Where_WithLambdaFilter_BuildsFilter()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f.Equals("status", "active"))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Filters.And.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndMultipleConditions_WrapsInAndOperator()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f
+                    .Equals("status", "active")
+                    .GreaterThan("age", 18))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Filters.And.Should().HaveCount(1);
+            result.Filters.And[0].Should().BeOfType<AndOperator>();
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndCaseInsensitive_SetsCaseInsensitiveProperty()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f.Equals("status", "active", caseInsensitive: true))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            var equalsOp = result.Filters.And[0] as EqualsOperator<string>;
+            equalsOp.Should().NotBeNull();
+            equalsOp.CaseInsensitive.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndNestedOr_CreatesOrOperator()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f
+                    .Equals("title", "hoodie")
+                    .And().Or(o => o
+                        .Equals("isInStock", true)
+                        .Equals("allowPreorder", true)))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Filters.And.Should().HaveCount(1);
+            
+            var rootAnd = result.Filters.And[0] as AndOperator;
+            rootAnd.Should().NotBeNull();
+            rootAnd.And.Should().HaveCount(2);
+            rootAnd.And[1].Should().BeOfType<OrOperator>();
+        }
+
+        [Fact]
+        public void Where_MultipleLambdaCalls_AccumulatesWithAnd()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f.Equals("status", "active"))
+                .Where(f => f.GreaterThan("age", 18))
+                .Where(f => f.NotEquals("role", "guest"))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Filters.And.Should().HaveCount(3);
+        }
+
+        [Fact]
+        public void Where_MixedLambdaAndPowerUserAPI_AccumulatesAll()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+            var powerUserFilter = new EqualsOperator<bool> { Field = "verified", Value = true };
+
+            // Act
+            var result = builder
+                .Where(f => f.Equals("status", "active"))
+                .Where(powerUserFilter)
+                .Where(f => f.GreaterThan("age", 18))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Filters.And.Should().HaveCount(3);
+            result.Filters.And[1].Should().Be(powerUserFilter);
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndEmptyFilter_DoesNotAddFilter()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => { })
+                .Build();
+
+            // Assert
+            result.Filters.Should().BeNull();
+        }
+
+        [Fact]
+        public void Where_WithNullLambda_ThrowsArgumentNullException()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            Action act = () => builder.Where((Action<IFilterBuilder>)null);
+
+            // Assert
+            act.Should().Throw<ArgumentNullException>();
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndInOperator_AddsInOperator()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f.In("category", "electronics", "computers", "phones"))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Filters.And.Should().HaveCount(1);
+            result.Filters.And[0].Should().BeOfType<InOperator<string>>();
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndContainsOperator_AddsContainsOperator()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f.Contains("description", "*premium*", caseInsensitive: true))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            var containsOp = result.Filters.And[0] as ContainsOperator<string>;
+            containsOp.Should().NotBeNull();
+            containsOp.CaseInsensitive.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Where_ComplexNestedLambda_BuildsCorrectStructure()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f
+                    .Equals("status", "active")
+                    .And().Or(o => o
+                        .Equals("isInStock", true)
+                        .Equals("allowPreorder", true))
+                    .And().And(a => a
+                        .GreaterThanOrEquals("price", 10)
+                        .LessThanOrEquals("price", 100)))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Filters.And.Should().HaveCount(1);
+            
+            var rootAnd = result.Filters.And[0] as AndOperator;
+            rootAnd.Should().NotBeNull();
+            rootAnd.And.Should().HaveCount(3);
+            
+            // Verify structure
+            rootAnd.And[0].Should().BeOfType<EqualsOperator<string>>();
+            rootAnd.And[1].Should().BeOfType<OrOperator>();
+            rootAnd.And[2].Should().BeOfType<AndOperator>();
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndPagination_CombinesBoth()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .WithPagination(0, 10)
+                .Where(f => f.Equals("status", "active"))
+                .SortBy("name", SortOrder.Asc)
+                .Build();
+
+            // Assert
+            result.Pagination.Should().NotBeNull();
+            result.Pagination.PageSize.Should().Be(10);
+            result.Filters.Should().NotBeNull();
+            result.Sort.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndFacets_CombinesBoth()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f.Equals("status", "active"))
+                .WithFacet("category", size: 20)
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Facets.Should().HaveCount(1);
+            result.Facets[0].Size.Should().Be(20);
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndAliases_CombinesBoth()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f.Equals("isFeatured", true))
+                .WithAliases("tile", "detail")
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Aliases.Should().HaveCount(2);
+        }
+
+        [Fact]
+        public void Where_MultipleLambdaCallsWithComplexFilters_BuildsCorrectStructure()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f
+                    .Equals("status", "active")
+                    .And().GreaterThan("age", 18))
+                .Where(f => f.Or(o => o
+                    .Equals("role", "admin")
+                    .Equals("role", "moderator")))
+                .Where(f => f.NotEquals("banned", true))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Filters.And.Should().HaveCount(3);
+        }
+
+        [Fact]
+        public void Where_WithLambdaAndAllOperators_BuildsCorrectly()
+        {
+            // Arrange
+            var builder = new QueryBuilder();
+
+            // Act
+            var result = builder
+                .Where(f => f
+                    .Equals("status", "active")
+                    .NotEquals("role", "guest")
+                    .GreaterThan("age", 18)
+                    .GreaterThanOrEquals("score", 75)
+                    .LessThan("failedAttempts", 3)
+                    .LessThanOrEquals("discount", 50)
+                    .Contains("description", "*premium*")
+                    .In("category", "electronics", "computers"))
+                .Build();
+
+            // Assert
+            result.Filters.Should().NotBeNull();
+            result.Filters.And.Should().HaveCount(1);
+            
+            var rootAnd = result.Filters.And[0] as AndOperator;
+            rootAnd.Should().NotBeNull();
+            rootAnd.And.Should().HaveCount(8);
+        }
+
+        #endregion
     }
 }
+

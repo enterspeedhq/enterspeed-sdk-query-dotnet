@@ -23,8 +23,209 @@ using IHost host = Host.CreateDefaultBuilder(args)
         services.AddEnterspeedQueryService())
     .Build();
 ```
-### Examples of usage
-Example of a common implementation where the query service is being utilized.
+
+### Using the Fluent Query Builder
+
+The SDK provides a fluent `QueryBuilder` API for constructing queries in a type-safe, intuitive way. This is the recommended approach for building queries.
+
+#### Basic Query Example
+
+```c#
+using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
+
+var query = new QueryBuilder()
+    .WithPagination(0, 10)
+    .SortBy("_updatedAt", SortOrder.Desc)
+    .Where(f => f.Equals("isActive", true))
+    .Build();
+
+var response = await _enterspeedQueryService.Query(
+    "environment-******-****-****-****-**********", 
+    "blogIndex", 
+    query);
+```
+
+#### Lambda-Based Filtering
+
+The fluent API supports lambda-based filters that automatically combine multiple conditions:
+
+```c#
+// Single filter
+var query = new QueryBuilder()
+    .Where(f => f.Equals("status", "active"))
+    .Build();
+
+// Multiple conditions (automatically combined with AND)
+var query = new QueryBuilder()
+    .Where(f => f
+        .Equals("status", "active")
+        .GreaterThan("age", 18)
+        .LessThan("age", 65))
+    .Build();
+
+// Multiple Where() calls accumulate with AND
+var query = new QueryBuilder()
+    .Where(f => f.Equals("status", "active"))
+    .Where(f => f.GreaterThan("age", 18))
+    .Where(f => f.NotEquals("role", "guest"))
+    .Build();
+```
+
+#### Available Filter Operators
+
+**Comparison Operators:**
+- `.Equals(field, value, caseInsensitive: bool?)` - Equality comparison
+- `.NotEquals(field, value, caseInsensitive: bool?)` - Inequality comparison
+- `.GreaterThan(field, value)` - Greater than
+- `.GreaterThanOrEquals(field, value)` - Greater than or equal
+- `.LessThan(field, value)` - Less than
+- `.LessThanOrEquals(field, value)` - Less than or equal
+
+**String Operators:**
+- `.Contains(field, pattern, caseInsensitive: bool?)` - Pattern matching (use `*` wildcards)
+
+**Collection Operators:**
+- `.In(field, ...values)` - Value in list
+
+```c#
+// Case-insensitive search
+var query = new QueryBuilder()
+    .Where(f => f.Equals("title", "hoodie", caseInsensitive: true))
+    .Build();
+
+// Pattern matching
+var query = new QueryBuilder()
+    .Where(f => f.Contains("description", "*premium*"))
+    .Build();
+
+// Value in list
+var query = new QueryBuilder()
+    .Where(f => f.In("category", "electronics", "computers", "phones"))
+    .Build();
+```
+
+#### Nested Logical Grouping (OR/AND)
+
+Create complex nested filter logic with OR and AND groups:
+
+```c#
+// OR group
+var query = new QueryBuilder()
+    .Where(f => f
+        .Equals("title", "hoodie")
+        .And().Or(o => o
+            .Equals("isInStock", true)
+            .Equals("allowPreorder", true)))
+    .Build();
+
+// Nested AND group
+var query = new QueryBuilder()
+    .Where(f => f
+        .Equals("status", "active")
+        .And(a => a
+            .GreaterThanOrEquals("price", 10)
+            .LessThanOrEquals("price", 100)))
+    .Build();
+
+// Complex nested structure
+var query = new QueryBuilder()
+    .Where(f => f
+        .Equals("status", "active")
+        .And().Or(o => o
+            .Equals("type", "A")
+            .Equals("type", "B"))
+        .And().And(a => a
+            .GreaterThan("score", 50)
+            .LessThan("score", 100)))
+    .Build();
+```
+
+#### Complete Query with All Features
+
+```c#
+var query = new QueryBuilder()
+    .WithPagination(0, 25)
+    .SortBy("_updatedAt", SortOrder.Desc)
+    .SortBy("title", SortOrder.Asc)
+    .Where(f => f
+        .Equals("isActive", true)
+        .And().Or(o => o
+            .Equals("isGlobal", true)
+            .In("category", "selected category 1", "selected category 2")))
+    .WithFacet("tags", name: "Tags", size: 3)
+    .WithFacet("category", name: "Category", size: 10)
+    .WithAliases("blogPostTile", "blogPostDetail")
+    .Build();
+
+var response = await _enterspeedQueryService.Query(
+    "environment-******-****-****-****-**********", 
+    "blogIndex", 
+    query);
+```
+
+#### Multi-Query Builder
+
+Execute multiple queries in a single request using the `MultiQueryBuilder`:
+
+```c#
+using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
+
+var request = new MultiQueryBuilder()
+    .AddQuery("activeUsers", "user-index", builder => builder
+        .WithPagination(0, 25)
+        .SortBy("lastName", SortOrder.Asc)
+        .Where(f => f.Equals("isActive", true))
+        .WithFacet("role", size: 10)
+        .WithAliases("userTile"))
+    
+    .AddQuery("recentOrders", "order-index", builder => builder
+        .WithPagination(0, 50)
+        .SortBy("orderDate", SortOrder.Desc)
+        .Where(f => f
+            .GreaterThan("orderDate", "2025-01-01")
+            .Equals("status", "completed")))
+    
+    .AddQuery("facetsOnly", "product-index", builder => builder
+        .WithPagination(0, 0)  // Get facets only, no results
+        .WithFacet("category")
+        .WithFacet("brand"))
+    
+    .Build();
+
+var response = await _enterspeedQueryService.Query(
+    "environment-******-****-****-****-**********", 
+    request);
+
+// Access individual query results by name
+var activeUsersResult = response.Response.Single(x => x.Name == "activeUsers");
+var recentOrdersResult = response.Response.Single(x => x.Name == "recentOrders");
+var facetsResult = response.Response.Single(x => x.Name == "facetsOnly");
+```
+
+#### Backward Compatibility: Power-User API
+
+The fluent builder is fully backward compatible with the direct operator API:
+
+```c#
+// Direct filter operators (power-user API)
+var query = new QueryBuilder()
+    .Where(new EqualsOperator<bool> { Field = "isActive", Value = true })
+    .WhereAll(
+        new GreaterThanOperator<int> { Field = "age", Value = 18 },
+        new LessThanOperator<int> { Field = "age", Value = 65 })
+    .Build();
+
+// Mix lambda and direct operators
+var query = new QueryBuilder()
+    .Where(f => f.Equals("status", "active"))
+    .Where(new EqualsOperator<bool> { Field = "verified", Value = true })
+    .Build();
+```
+
+### Alternative: Direct Object Construction
+
+The examples below demonstrate the traditional approach using direct object construction. While this approach is still fully supported, **we recommend using the fluent QueryBuilder API** shown above for better readability and type safety.
+
 ```c#
 using System.Text.Json.Serialization;
 using Enterspeed.Query.Sdk.Api.Extensions;

@@ -8,130 +8,163 @@ using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
 namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
 {
     /// <summary>
-    /// Fluent builder for constructing query objects.
+    /// Concrete implementation of IQueryBuilder for building individual queries.
+    /// Accumulates configuration and produces a QueryObject when Build() is called.
     /// </summary>
-    public class QueryBuilder : IQueryBuilder
+    internal class QueryBuilder : IQueryBuilder
     {
-        private readonly List<FilterOperator> _filters = new List<FilterOperator>();
+        private Pagination _pagination;
         private readonly List<Sort> _sorts = new List<Sort>();
+        private readonly List<IOperator> _accumulatedFilters = new List<IOperator>();
         private readonly List<Facet> _facets = new List<Facet>();
         private readonly List<string> _aliases = new List<string>();
-        private Pagination _pagination;
 
-        /// <inheritdoc />
         public IQueryBuilder WithPagination(int page, int pageSize)
         {
             if (page < 0)
-                throw new ArgumentException("Page must be non-negative.", nameof(page));
-
-            if (pageSize < 1)
-                throw new ArgumentException("Page size must be at least 1.", nameof(pageSize));
-
-            _pagination = new Pagination
             {
-                Page = page,
-                PageSize = pageSize
-            };
+                throw new ArgumentException("Page number must be non-negative.", nameof(page));
+            }
 
+            if (pageSize <= 0)
+            {
+                throw new ArgumentException("Page size must be positive.", nameof(pageSize));
+            }
+
+            _pagination = new Pagination { Page = page, PageSize = pageSize };
             return this;
         }
 
-        /// <inheritdoc />
         public IQueryBuilder SortBy(string field, SortOrder order = SortOrder.Asc)
         {
             if (string.IsNullOrWhiteSpace(field))
-                throw new ArgumentException("Field cannot be null or empty.", nameof(field));
-
-            _sorts.Add(new Sort
             {
-                Field = field,
-                Order = order
-            });
+                throw new ArgumentException("Field name cannot be null or whitespace.", nameof(field));
+            }
 
+            _sorts.Add(new Sort { Field = field, Order = order });
             return this;
         }
 
-        /// <inheritdoc />
-        public IQueryBuilder Where(FilterOperator filter)
+        public IQueryBuilder Where(Action<IFilterBuilder> configure)
         {
-            if (filter == null)
-                throw new ArgumentNullException(nameof(filter));
-
-            _filters.Add(filter);
-            return this;
-        }
-
-        /// <inheritdoc />
-        public IQueryBuilder WhereAll(params FilterOperator[] filters)
-        {
-            if (filters == null || filters.Length == 0)
-                throw new ArgumentException("At least one filter must be provided.", nameof(filters));
-
-            foreach (var filter in filters)
+            if (configure == null)
             {
-                if (filter == null)
-                    throw new ArgumentNullException(nameof(filters), "Filter collection cannot contain null values.");
+                throw new ArgumentNullException(nameof(configure));
+            }
 
-                _filters.Add(filter);
+            var filterBuilder = new FilterBuilder();
+            configure(filterBuilder);
+
+            var filters = filterBuilder.BuildFilters();
+            if (filters.Count > 0)
+            {
+                _accumulatedFilters.AddRange(filters);
             }
 
             return this;
         }
 
-        /// <inheritdoc />
+        public IQueryBuilder Where(IOperator filter)
+        {
+            if (filter == null)
+            {
+                throw new ArgumentNullException(nameof(filter));
+            }
+
+            _accumulatedFilters.Add(filter);
+            return this;
+        }
+
+        public IQueryBuilder WhereAll(params IOperator[] filters)
+        {
+            if (filters == null)
+            {
+                throw new ArgumentNullException(nameof(filters));
+            }
+
+            if (filters.Length == 0)
+            {
+                return this;
+            }
+
+            if (filters.Length == 1)
+            {
+                _accumulatedFilters.Add(filters[0]);
+            }
+            else
+            {
+                _accumulatedFilters.Add(new AndOperator { And = filters.ToList() });
+            }
+
+            return this;
+        }
+
         public IQueryBuilder WithFacet(string field, string name = null, int size = 10)
         {
             if (string.IsNullOrWhiteSpace(field))
-                throw new ArgumentException("Field cannot be null or empty.", nameof(field));
+            {
+                throw new ArgumentException("Field name cannot be null or whitespace.", nameof(field));
+            }
 
-            if (size < 1)
-                throw new ArgumentException("Facet size must be at least 1.", nameof(size));
+            if (size <= 0)
+            {
+                throw new ArgumentException("Facet size must be positive.", nameof(size));
+            }
 
             _facets.Add(new Facet
             {
                 Field = field,
-                Name = name ?? field,
+                Name = name ?? "",
                 Size = size
             });
 
             return this;
         }
 
-        /// <inheritdoc />
         public IQueryBuilder WithAliases(params string[] aliases)
         {
-            if (aliases == null || aliases.Length == 0)
-                throw new ArgumentException("At least one alias must be provided.", nameof(aliases));
-
-            foreach (var alias in aliases)
+            if (aliases == null)
             {
-                if (string.IsNullOrWhiteSpace(alias))
-                    throw new ArgumentException("Alias cannot be null or empty.", nameof(aliases));
-
-                _aliases.Add(alias);
+                throw new ArgumentNullException(nameof(aliases));
             }
 
+            _aliases.AddRange(aliases.Where(a => !string.IsNullOrWhiteSpace(a)));
             return this;
         }
 
-        /// <inheritdoc />
         public QueryObject Build()
         {
-            var queryObject = new QueryObject
-            {
-                Pagination = _pagination,
-                Sort = _sorts.Count > 0 ? _sorts : null,
-                Facets = _facets.Count > 0 ? _facets : null,
-                Aliases = _aliases.Count > 0 ? _aliases : null
-            };
+            var queryObject = new QueryObject();
 
-            // Build filters with AND logic if multiple filters exist
-            if (_filters.Count > 0)
+            // Set pagination
+            if (_pagination != null)
             {
-                queryObject.Filters = new AndOperator
-                {
-                    And = _filters.Cast<IOperator>().ToList()
-                };
+                queryObject.Pagination = _pagination;
+            }
+
+            // Set sorts
+            if (_sorts.Count > 0)
+            {
+                queryObject.Sort = _sorts;
+            }
+
+            // Combine accumulated filters with AND logic (matches Enterspeed Query API structure)
+            if (_accumulatedFilters.Count > 0)
+            {
+                queryObject.Filters = new AndOperator { And = _accumulatedFilters };
+            }
+
+            // Set facets
+            if (_facets.Count > 0)
+            {
+                queryObject.Facets = _facets;
+            }
+
+            // Set aliases
+            if (_aliases.Count > 0)
+            {
+                queryObject.Aliases = _aliases;
             }
 
             return queryObject;

@@ -25,16 +25,31 @@ namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
         IQueryBuilder SortBy(string field, SortOrder order = SortOrder.Asc);
 
         /// <summary>
-        /// Adds a filter to the query.
+        /// Adds filters using a fluent lambda-based builder pattern.
+        /// Multiple Where() calls accumulate with implicit AND logic.
+        /// </summary>
+        /// <param name="configure">Lambda expression to configure filter conditions.</param>
+        /// <returns>The query builder for method chaining.</returns>
+        /// <example>
+        /// .Where(f => f
+        ///     .Equals("status", "active")
+        ///     .And().GreaterThan("age", 18))
+        /// </example>
+        IQueryBuilder Where(Action<IFilterBuilder> configure);
+
+        /// <summary>
+        /// Adds a filter to the query using a pre-constructed FilterOperator.
+        /// This is the power-user API for complex scenarios.
         /// </summary>
         /// <param name="filter">The filter operator to apply.</param>
-        IQueryBuilder Where(FilterOperator filter);
+        IQueryBuilder Where(IOperator filter);
 
         /// <summary>
         /// Adds multiple filters with AND logic to the query.
+        /// This is the power-user API for complex scenarios.
         /// </summary>
         /// <param name="filters">Collection of filter operators to apply.</param>
-        IQueryBuilder WhereAll(params FilterOperator[] filters);
+        IQueryBuilder WhereAll(params IOperator[] filters);
 
         /// <summary>
         /// Adds a facet aggregation to the query.
