@@ -7,7 +7,6 @@ namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
 
     public class QueryResponseError : IQueryResponse
     {
-        // TODO: VALIDATE THE Auto-property accessor 'Message.set' AND 'Errors.set' is never used
         public string Message { get; set; }
         public string[] Errors { get; set; }
         public QueryStatus Status => QueryStatus.Error;

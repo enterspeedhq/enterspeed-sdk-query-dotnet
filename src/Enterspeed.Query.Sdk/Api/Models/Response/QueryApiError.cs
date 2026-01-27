@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 
-namespace Enterspeed.Query.Sdk.Api.Models
+namespace Enterspeed.Query.Sdk.Api.Models.Response
 {
     public class QueryApiError
     {

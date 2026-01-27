@@ -11,13 +11,12 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
     public class SuccessResponse<T> : ISuccess<T>
     {
         private readonly List<T> _results;
-        private readonly int _totalResults;
         private readonly List<FacetResult> _facets;
 
         public SuccessResponse(List<T> results, int totalResults, List<FacetResult> facets = null)
         {
             _results = results ?? new List<T>();
-            _totalResults = totalResults;
+            TotalResults = totalResults;
             _facets = facets ?? new List<FacetResult>();
         }
 
@@ -28,7 +27,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
         public IReadOnlyList<T> Results => _results.AsReadOnly();
 
         /// <inheritdoc />
-        public int TotalResults => _totalResults;
+        public int TotalResults { get; }
 
         /// <inheritdoc />
         public IReadOnlyList<FacetResult> Facets => _facets.AsReadOnly();
