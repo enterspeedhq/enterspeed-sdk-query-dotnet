@@ -55,36 +55,29 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.Services
             public string Status { get; set; }
         }
 
-        public EnterspeedQueryServiceMultiQueryTests()
+    public EnterspeedQueryServiceMultiQueryTests()
+    {
+        _serializer = new SystemTextJsonSerializer();
+        var config = new EnterspeedQueryConfiguration();
+        var configProvider = new EnterspeedQueryConfigurationProvider(config);
+
+        _mockHttpMessageHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+
+        var httpClient = new HttpClient(_mockHttpMessageHandler.Object)
         {
-            _serializer = new SystemTextJsonSerializer();
-            var config = new EnterspeedQueryConfiguration();
-            var configProvider = new EnterspeedQueryConfigurationProvider(config);
+            BaseAddress = new Uri(config.BaseUrl)
+        };
 
-            _mockHttpMessageHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        // Create mock IHttpClientFactory
+        var mockHttpClientFactory = new Mock<IHttpClientFactory>();
+        mockHttpClientFactory
+            .Setup(x => x.CreateClient(It.IsAny<string>()))
+            .Returns(httpClient);
 
-            var httpClient = new HttpClient(_mockHttpMessageHandler.Object)
-            {
-                BaseAddress = new Uri(config.BaseUrl)
-            };
+        var queryConnection = new EnterspeedQueryConnection(mockHttpClientFactory.Object, configProvider);
 
-            var queryConnection = new EnterspeedQueryConnection(configProvider);
-            
-            // Use reflection to inject the mocked HttpClient BEFORE Connect() is called
-            var httpClientField = typeof(EnterspeedQueryConnection)
-                .GetField("_httpClientConnection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            var connectionEstablishedDateField = typeof(EnterspeedQueryConnection)
-                .GetField("_connectionEstablishedDate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            // Inject the mocked HttpClient
-            httpClientField?.SetValue(queryConnection, httpClient);
-
-            // Set connection established date to prevent re-connection
-            connectionEstablishedDateField?.SetValue(queryConnection, DateTime.Now);
-
-            _queryService = new EnterspeedQueryService(queryConnection, configProvider, _serializer);
-        }
+        _queryService = new EnterspeedQueryService(queryConnection, configProvider, _serializer);
+    }
 
         [Fact]
         public async Task MultiQuery_WithSuccessfulQueries_ReturnsTypedResponses()

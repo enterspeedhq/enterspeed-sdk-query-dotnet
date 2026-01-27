@@ -1,3 +1,4 @@
+using System;
 using Enterspeed.Query.Sdk.Api.Providers;
 using Enterspeed.Query.Sdk.Api.Services;
 using Enterspeed.Query.Sdk.Configuration;
@@ -10,12 +11,29 @@ namespace Enterspeed.Query.Sdk.Api.Extensions
 {
     public static class EnterspeedServiceCollectionExtension
     {
+        internal const string HttpClientName = "EnterspeedQueryClient";
+
         public static IServiceCollection AddEnterspeedQueryService(this IServiceCollection services, EnterspeedQueryConfiguration enterspeedQueryConfiguration = null)
         {
+            var configuration = enterspeedQueryConfiguration ?? new EnterspeedQueryConfiguration();
+            var configurationProvider = new EnterspeedQueryConfigurationProvider(configuration);
+
             services.AddTransient<IEnterspeedQueryService, EnterspeedQueryService>();
             services.AddTransient<IJsonSerializer, SystemTextJsonSerializer>();
             services.AddTransient<EnterspeedQueryConnection>();
-            services.AddSingleton<IEnterspeedQueryConfigurationProvider>(new EnterspeedQueryConfigurationProvider(enterspeedQueryConfiguration ?? new EnterspeedQueryConfiguration()));
+            services.AddSingleton<IEnterspeedQueryConfigurationProvider>(configurationProvider);
+
+            services.AddHttpClient(HttpClientName, client =>
+            {
+                if (!string.IsNullOrWhiteSpace(configuration.BaseUrl))
+                {
+                    client.BaseAddress = new Uri(configuration.BaseUrl);
+                }
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                client.Timeout = TimeSpan.FromSeconds(configuration.ConnectionTimeout > 0 ? configuration.ConnectionTimeout : 60);
+            })
+            .SetHandlerLifetime(TimeSpan.FromSeconds(configuration.ConnectionTimeout > 0 ? configuration.ConnectionTimeout : 60));
+
             return services;
         }
     }
