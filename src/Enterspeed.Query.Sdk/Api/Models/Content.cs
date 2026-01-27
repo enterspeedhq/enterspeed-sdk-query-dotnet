@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Enterspeed.Query.Sdk.Api.Models
 {
@@ -14,23 +13,11 @@ namespace Enterspeed.Query.Sdk.Api.Models
         }
 
         public JsonElement Value { get; set; }
-        public T GetContent<T>()
-        {
-            #if NET6_0_OR_GREATER
-            return Value.Deserialize<T>(_serializerOptions);
-            #endif
-            throw new NotImplementedException();
-        }
+        public T GetContent<T>() => Value.Deserialize<T>(_serializerOptions);
 
-        public T GetContent<T>(string propertyName)
-        {
-            #if NET6_0_OR_GREATER
-            var hasValue = Value.TryGetProperty(propertyName, out var value);
-            return hasValue
+        public T GetContent<T>(string propertyName) =>
+            Value.TryGetProperty(propertyName, out var value)
                 ? value.Deserialize<T>(_serializerOptions)
                 : default;
-            #endif
-            throw new NotImplementedException();
-        }
     }
 }
