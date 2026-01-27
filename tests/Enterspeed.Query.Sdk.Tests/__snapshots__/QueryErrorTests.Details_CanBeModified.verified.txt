@@ -1,0 +1,6 @@
+﻿{
+  Message: Test,
+  Details: {
+    key: value
+  }
+}

@@ -1,0 +1,9 @@
+﻿{
+  Facets: [
+    {
+      Name: categoryFacet,
+      Field: category,
+      Size: 20
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+﻿[
+  {
+    Operator: greaterThanOrEquals,
+    Value: 100.5,
+    Field: price
+  }
+]

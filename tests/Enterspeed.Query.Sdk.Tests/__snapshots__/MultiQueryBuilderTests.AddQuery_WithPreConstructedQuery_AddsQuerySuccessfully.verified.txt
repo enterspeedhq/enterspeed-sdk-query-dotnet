@@ -1,0 +1,11 @@
+﻿{
+  Queries: [
+    {
+      Index: product-index,
+      Name: products,
+      Pagination: {
+        PageSize: 5
+      }
+    }
+  ]
+}

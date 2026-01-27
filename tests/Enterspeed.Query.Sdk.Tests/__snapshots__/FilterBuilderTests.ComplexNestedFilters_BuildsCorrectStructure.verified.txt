@@ -1,0 +1,50 @@
+﻿[
+  {
+    And: [
+      {
+        Operator: equals,
+        Value: active,
+        CaseInsensitive: false,
+        Field: status
+      },
+      {
+        Or: [
+          {
+            And: [
+              {
+                Operator: equals,
+                Value: true,
+                CaseInsensitive: false,
+                Field: isInStock
+              },
+              {
+                Operator: equals,
+                Value: true,
+                CaseInsensitive: false,
+                Field: allowPreorder
+              }
+            ]
+          }
+        ]
+      },
+      {
+        And: [
+          {
+            And: [
+              {
+                Operator: greaterThan,
+                Value: 10,
+                Field: price
+              },
+              {
+                Operator: lessThan,
+                Value: 100,
+                Field: price
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

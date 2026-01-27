@@ -1,0 +1,14 @@
+﻿{
+  Status: false,
+  Errors: [
+    {
+      Message: Query execution failed
+    },
+    {
+      Message: Invalid filter
+    },
+    {
+      Message: Timeout occurred
+    }
+  ]
+}

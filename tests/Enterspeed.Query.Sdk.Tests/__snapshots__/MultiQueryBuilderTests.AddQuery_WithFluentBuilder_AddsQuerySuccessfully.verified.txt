@@ -1,0 +1,17 @@
+﻿{
+  Queries: [
+    {
+      Index: user-index,
+      Name: users,
+      Sort: [
+        {
+          Field: name,
+          Order: Asc
+        }
+      ],
+      Pagination: {
+        PageSize: 10
+      }
+    }
+  ]
+}

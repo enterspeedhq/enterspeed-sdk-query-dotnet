@@ -1,0 +1,21 @@
+﻿{
+  booksResult: {
+    Status: true,
+    Results: [
+      {
+        Title: Test Book,
+        Author: Test Author,
+        Year: 2021
+      }
+    ],
+    TotalResults: 1
+  },
+  authorsResult: {
+    Status: false,
+    Errors: [
+      {
+        Message: Query failed
+      }
+    ]
+  }
+}

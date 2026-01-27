@@ -1,0 +1,9 @@
+﻿{
+  Status: false,
+  Errors: [
+    {
+      Message: Query name cannot be null or empty,
+      Code: INVALID_QUERY_NAME
+    }
+  ]
+}

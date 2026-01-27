@@ -1,0 +1,8 @@
+﻿[
+  {
+    Operator: notEquals,
+    Value: guest,
+    CaseInsensitive: true,
+    Field: role
+  }
+]

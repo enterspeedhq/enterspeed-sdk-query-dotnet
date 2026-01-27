@@ -1,0 +1,7 @@
+﻿{
+  Aliases: [
+    alias1,
+    alias2,
+    alias3
+  ]
+}

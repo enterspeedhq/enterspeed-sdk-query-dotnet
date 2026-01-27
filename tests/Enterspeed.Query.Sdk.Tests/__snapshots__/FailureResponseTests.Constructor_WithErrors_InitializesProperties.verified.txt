@@ -1,0 +1,11 @@
+﻿{
+  Status: false,
+  Errors: [
+    {
+      Message: Error 1
+    },
+    {
+      Message: Error 2
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        Operator: equals,
+        Value: active,
+        CaseInsensitive: false,
+        Field: status
+      }
+    ]
+  },
+  Facets: [
+    {
+      Name: ,
+      Field: category,
+      Size: 20
+    }
+  ]
+}

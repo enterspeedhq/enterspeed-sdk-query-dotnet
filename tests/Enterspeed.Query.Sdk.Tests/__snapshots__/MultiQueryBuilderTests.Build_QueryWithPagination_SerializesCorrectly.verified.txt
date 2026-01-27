@@ -1,0 +1,12 @@
+﻿{
+  Queries: [
+    {
+      Index: test-index,
+      Name: test,
+      Pagination: {
+        Page: 2,
+        PageSize: 50
+      }
+    }
+  ]
+}

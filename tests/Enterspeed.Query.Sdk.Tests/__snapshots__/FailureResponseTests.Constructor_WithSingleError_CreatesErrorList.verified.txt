@@ -1,0 +1,9 @@
+﻿{
+  Status: false,
+  Errors: [
+    {
+      Message: Single error,
+      Code: ERROR_CODE
+    }
+  ]
+}

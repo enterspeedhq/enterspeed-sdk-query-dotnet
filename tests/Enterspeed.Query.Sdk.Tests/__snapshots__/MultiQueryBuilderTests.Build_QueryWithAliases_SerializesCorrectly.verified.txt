@@ -1,0 +1,12 @@
+﻿{
+  Queries: [
+    {
+      Index: test-index,
+      Name: test,
+      Aliases: [
+        view1,
+        view2
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+﻿[
+  {
+    Operator: greaterThan,
+    Value: 18,
+    Field: age
+  }
+]

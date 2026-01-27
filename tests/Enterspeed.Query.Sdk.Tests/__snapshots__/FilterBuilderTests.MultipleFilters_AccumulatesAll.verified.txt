@@ -1,0 +1,22 @@
+﻿[
+  {
+    And: [
+      {
+        Operator: equals,
+        Value: active,
+        CaseInsensitive: false,
+        Field: status
+      },
+      {
+        Operator: greaterThan,
+        Value: 18,
+        Field: age
+      },
+      {
+        Operator: lessThan,
+        Value: 65,
+        Field: age
+      }
+    ]
+  }
+]

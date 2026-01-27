@@ -1,0 +1,25 @@
+﻿{
+  Status: true,
+  Results: [
+    {
+      Title: Test
+    }
+  ],
+  TotalResults: 1,
+  Facets: [
+    {
+      Name: year,
+      Groups: [
+        {
+          Value: 2021,
+          Count: 5
+        },
+        {
+          Value: 2022,
+          Count: 3
+        }
+      ],
+      IsValid: false
+    }
+  ]
+}
