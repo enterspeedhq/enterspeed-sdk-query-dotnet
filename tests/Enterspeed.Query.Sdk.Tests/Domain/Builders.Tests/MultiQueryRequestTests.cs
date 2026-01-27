@@ -1,3 +1,5 @@
+namespace Enterspeed.Query.Sdk.Tests.Domain.Builders.Tests;
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Enterspeed.Query.Sdk.Domain.Builders;
@@ -6,80 +8,75 @@ using FluentAssertions;
 using static VerifyXunit.Verifier;
 using Xunit;
 
-namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
+public class MultiQueryRequestTests
 {
-    /// <summary>
-    /// Tests for MultiQueryRequest immutability and structure.
-    /// </summary>
-    public class MultiQueryRequestTests
+    [Fact]
+    public Task Constructor_WithQueries_CreatesImmutableRequest()
     {
-        [Fact]
-        public void Constructor_WithQueries_CreatesImmutableRequest()
+        var queries = new List<MultiQueryObject>
         {
-            // Arrange
-            var queries = new List<MultiQueryObject>
+            new ()
             {
-                new MultiQueryObject { Name = "test1", Index = "index1" },
-                new MultiQueryObject { Name = "test2", Index = "index2" }
-            };
+                Name = "test1", Index = "index1"
+            },
+            new ()
+            {
+                Name = "test2", Index = "index2"
+            }
+        };
+        var request = new MultiQueryRequest(queries);
+        return Verify(request);
+    }
 
-            // Act
-            var request = new MultiQueryRequest(queries);
-
-            // Assert
-            request.Should().NotBeNull();
-            request.Queries.Should().HaveCount(2);
-        }
-
-        [Fact]
-        public void Queries_IsReadOnly()
+    [Fact]
+    public void Queries_IsReadOnly()
+    {
+        var queries = new List<MultiQueryObject>
         {
-            // Arrange
-            var queries = new List<MultiQueryObject>
+            new ()
             {
-                new MultiQueryObject { Name = "test", Index = "index" }
-            };
-            var request = new MultiQueryRequest(queries);
+                Name = "test", Index = "index"
+            }
+        };
+        var request = new MultiQueryRequest(queries);
+        request.Queries.Should().BeAssignableTo<IReadOnlyList<MultiQueryObject>>();
+    }
 
-            // Act & Assert
-            request.Queries.Should().BeAssignableTo<IReadOnlyList<MultiQueryObject>>();
-        }
-
-        [Fact]
-        public void Queries_ChangingOriginalList_DoesNotAffectRequest()
+    [Fact]
+    public Task Queries_ChangingOriginalList_DoesNotAffectRequest()
+    {
+        var queries = new List<MultiQueryObject>
         {
-            // Arrange
-            var queries = new List<MultiQueryObject>
+            new ()
             {
-                new MultiQueryObject { Name = "test1", Index = "index1" }
-            };
-            var request = new MultiQueryRequest(queries);
+                Name = "test1", Index = "index1"
+            }
+        };
+        var request = new MultiQueryRequest(queries);
+        queries.Add(new MultiQueryObject { Name = "test2", Index = "index2" });
+        return Verify(request)
+            .UseMethodName("Queries_ChangingOriginalList_DoesNotAffectRequest_StillHasOne");
+    }
 
-            // Act
-            queries.Add(new MultiQueryObject { Name = "test2", Index = "index2" });
-
-            // Assert
-            request.Queries.Should().HaveCount(1, "the request should be immutable");
-        }
-
-        [Fact]
-        public void Queries_PreservesOrder()
+    [Fact]
+    public Task Queries_PreservesOrder()
+    {
+        var queries = new List<MultiQueryObject>
         {
-            // Arrange
-            var queries = new List<MultiQueryObject>
+            new ()
             {
-                new MultiQueryObject { Name = "first", Index = "index1" },
-                new MultiQueryObject { Name = "second", Index = "index2" },
-                new MultiQueryObject { Name = "third", Index = "index3" }
-            };
-
-            // Act
-            var request = new MultiQueryRequest(queries);
-
-            // Assert
-            request.Queries[0].Name.Should().Be("first");
-            request.Queries[1].Name.Should().Be("second");
-            request.Queries[2].Name.Should().Be("third");
-        }
+                Name = "first", Index = "index1"
+            },
+            new ()
+            {
+                Name = "second", Index = "index2"
+            },
+            new ()
+            {
+                Name = "third", Index = "index3"
+            }
+        };
+        var request = new MultiQueryRequest(queries);
+        return Verify(request);
     }
 }
