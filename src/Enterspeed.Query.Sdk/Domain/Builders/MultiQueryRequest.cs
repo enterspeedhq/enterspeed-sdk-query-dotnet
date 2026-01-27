@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Enterspeed.Query.Sdk.Domain.Models;
 
-namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
+namespace Enterspeed.Query.Sdk.Domain.Builders
 {
     /// <summary>
     /// Immutable container for a multi-query request.

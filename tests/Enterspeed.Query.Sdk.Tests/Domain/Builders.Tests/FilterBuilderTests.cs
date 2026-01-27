@@ -1,7 +1,6 @@
 using System;
-using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
-using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
-using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
+using System.Threading.Tasks;
+using Enterspeed.Query.Sdk.Domain.Builders;
 using FluentAssertions;
 using Xunit;
 

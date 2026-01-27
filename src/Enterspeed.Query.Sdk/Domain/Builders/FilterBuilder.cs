@@ -6,7 +6,7 @@ using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
 using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
 
-namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
+namespace Enterspeed.Query.Sdk.Domain.Builders
 {
     /// <summary>
     /// Internal implementation of IFilterBuilder for accumulating filter operators.

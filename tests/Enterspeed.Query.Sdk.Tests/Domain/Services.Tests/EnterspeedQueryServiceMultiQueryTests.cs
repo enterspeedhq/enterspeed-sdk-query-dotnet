@@ -1,3 +1,5 @@
+namespace Enterspeed.Query.Sdk.Tests.Domain.Services.Tests;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +14,8 @@ using Enterspeed.Query.Sdk.Api.Models.Query;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Api.Providers;
 using Enterspeed.Query.Sdk.Api.Services;
-using Enterspeed.Query.Sdk.Configuration;
+using Configuration;
+using Enterspeed.Query.Sdk.Domain.Builders;
 using Enterspeed.Query.Sdk.Domain.Connection;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
@@ -23,18 +26,12 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace Enterspeed.Query.Sdk.Tests.Domain.Services
+public class EnterspeedQueryServiceMultiQueryTests
 {
-    /// <summary>
-    /// Integration tests for multi-query functionality in EnterspeedQueryService.
-    /// Tests the complete flow from request building to typed response retrieval.
-    /// </summary>
-    public class EnterspeedQueryServiceMultiQueryTests
-    {
-        private readonly IJsonSerializer _serializer;
-        private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
-        private readonly EnterspeedQueryService _queryService;
-        private const string TestApiKey = "environment-test-guid";
+    private const string TestApiKey = "environment-test-guid";
+    private readonly IJsonSerializer _serializer;
+    private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
+    private readonly EnterspeedQueryService _queryService;
 
         // Test models matching the API response structure
         public class Product

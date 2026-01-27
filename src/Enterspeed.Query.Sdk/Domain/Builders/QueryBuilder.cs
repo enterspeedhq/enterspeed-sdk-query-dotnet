@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Enterspeed.Query.Sdk.Domain.Models;
-using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
 using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
 
-namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
+namespace Enterspeed.Query.Sdk.Domain.Builders
 {
     /// <summary>
     /// Concrete implementation of IQueryBuilder for building individual queries.
@@ -83,18 +82,16 @@ namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
                 throw new ArgumentNullException(nameof(filters));
             }
 
-            if (filters.Length == 0)
+            switch (filters.Length)
             {
-                return this;
-            }
-
-            if (filters.Length == 1)
-            {
-                _accumulatedFilters.Add(filters[0]);
-            }
-            else
-            {
-                _accumulatedFilters.Add(new AndOperator { And = filters.ToList() });
+                case 0:
+                    break;
+                case 1:
+                    _accumulatedFilters.Add(filters[0]);
+                    break;
+                default:
+                    _accumulatedFilters.Add(new AndOperator { And = filters.ToList() });
+                    break;
             }
 
             return this;

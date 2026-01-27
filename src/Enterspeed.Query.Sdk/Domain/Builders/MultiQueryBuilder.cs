@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Enterspeed.Query.Sdk.Domain.Models;
 
-namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
+namespace Enterspeed.Query.Sdk.Domain.Builders
 {
     /// <summary>
     /// Fluent builder for constructing multi-query requests.
@@ -132,15 +132,15 @@ namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
 
 /*
  * Usage Example:
- * 
+ *
  * var request = new MultiQueryBuilder()
  *     .AddQuery("users", "user-index", builder => builder
  *         .WithPagination(0, 5)
  *         .SortBy("updatedAt", SortOrder.Desc)
  *         .Where(new EqualsOperator { Field = "status", Value = "active" }))
- *     .AddQuery("products", "product-index", new QueryObject 
- *     { 
- *         Pagination = new Pagination { Page = 0, PageSize = 10 } 
+ *     .AddQuery("products", "product-index", new QueryObject
+ *     {
+ *         Pagination = new Pagination { Page = 0, PageSize = 10 }
  *     })
  *     .Build();
  */

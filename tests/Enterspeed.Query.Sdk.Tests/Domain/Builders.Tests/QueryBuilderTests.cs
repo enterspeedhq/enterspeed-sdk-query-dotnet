@@ -1,4 +1,8 @@
+namespace Enterspeed.Query.Sdk.Tests.Domain.Builders.Tests;
+
 using System;
+using System.Threading.Tasks;
+using Enterspeed.Query.Sdk.Domain.Builders;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
 using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;

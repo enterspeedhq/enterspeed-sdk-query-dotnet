@@ -1,19 +1,17 @@
+namespace Enterspeed.Query.Sdk.Tests.Domain.Builders.Tests;
+
 using System;
+using System.Threading.Tasks;
+using Enterspeed.Query.Sdk.Domain.Builders;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
-using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
-using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
 using FluentAssertions;
 using Xunit;
+using static VerifyXunit.Verifier;
 
-namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
+public class MultiQueryBuilderTests
 {
-    /// <summary>
-    /// Tests for the MultiQueryBuilder covering all acceptance criteria.
-    /// </summary>
-    public class MultiQueryBuilderTests
-    {
-        #region Query Construction Tests
+    #region Query Construction Tests
 
         [Fact]
         public void AddQuery_WithFluentBuilder_AddsQuerySuccessfully()

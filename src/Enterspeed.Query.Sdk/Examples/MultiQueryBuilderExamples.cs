@@ -1,9 +1,7 @@
 using System;
-using System.Threading.Tasks;
+using Enterspeed.Query.Sdk.Domain.Builders;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
-using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
-using Enterspeed.Query.Sdk.Domain.Services;
 
 namespace Enterspeed.Query.Sdk.Examples
 {

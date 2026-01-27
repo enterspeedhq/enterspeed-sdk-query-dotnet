@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Enterspeed.Query.Sdk.Api.Models;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Api.Services;
+using Enterspeed.Query.Sdk.Domain.Builders;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
 

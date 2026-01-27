@@ -1,6 +1,6 @@
 using System;
 
-namespace Enterspeed.Query.Sdk.Domain.MultiQueriBuilder
+namespace Enterspeed.Query.Sdk.Domain.Builders
 {
     /// <summary>
     /// Fluent interface for building filter conditions within a query.

@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Enterspeed.Query.Sdk.Domain.Builders;
 using Enterspeed.Query.Sdk.Domain.Models;
-using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
 using FluentAssertions;
+using static VerifyXunit.Verifier;
 using Xunit;
 
 namespace Enterspeed.Query.Sdk.Tests.Domain.MultiQueriBuilder
