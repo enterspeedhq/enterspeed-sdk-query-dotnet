@@ -1,14 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Enterspeed.Query.Sdk.Api.Models;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Api.Services;
 using Enterspeed.Query.Sdk.Domain.Builders;
 using Enterspeed.Query.Sdk.Domain.Models;
-using Enterspeed.Query.Sdk.Domain.MultiQueriBuilder;
 
 namespace Enterspeed.Query.Sdk.Examples
 {
@@ -73,7 +70,7 @@ namespace Enterspeed.Query.Sdk.Examples
             if (productsResponse.Status)
             {
                 var productsSuccess = productsResponse as ISuccess<Product>;
-                
+
                 Console.WriteLine($"Found {productsSuccess.TotalResults} products");
                 foreach (var product in productsSuccess.Results)
                 {
@@ -105,7 +102,7 @@ namespace Enterspeed.Query.Sdk.Examples
             {
                 var usersSuccess = usersResponse as ISuccess<User>;
                 Console.WriteLine($"\nFound {usersSuccess.TotalResults} active users");
-                
+
                 foreach (var user in usersSuccess.Results)
                 {
                     Console.WriteLine($"  - {user.Name} ({user.Email})");
@@ -227,7 +224,7 @@ namespace Enterspeed.Query.Sdk.Examples
             if (productsResponse is ISuccess<Product> success)
             {
                 Console.WriteLine($"Total results: {success.TotalResults}");
-                
+
                 foreach (var facet in success.Facets)
                 {
                     Console.WriteLine($"\n{facet.Name} ({facet.Field}):");

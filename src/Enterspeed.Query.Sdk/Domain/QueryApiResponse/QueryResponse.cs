@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Enterspeed.Query.Sdk.Api.Models.Response;
 
 namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
 {

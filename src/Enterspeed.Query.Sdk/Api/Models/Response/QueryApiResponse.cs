@@ -6,9 +6,10 @@ using System.Net.Http.Headers;
 using Enterspeed.Query.Sdk.Api.Models.Query;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Api.Services;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;
 
-namespace Enterspeed.Query.Sdk.Api.Models
+namespace Enterspeed.Query.Sdk.Api.Models.Response
 {
     /// <summary>
     /// Response wrapper for single query API calls.

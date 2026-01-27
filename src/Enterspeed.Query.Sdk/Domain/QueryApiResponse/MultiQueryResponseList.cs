@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using Enterspeed.Query.Sdk.Api.Models.MultiQuery;
 
-namespace Enterspeed.Query.Sdk.Api.Models.Query
+namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
 {
     /// <summary>
     /// Internal wrapper for multi-query API responses.

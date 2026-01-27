@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Enterspeed.Query.Sdk.Api.Models.MultiQuery;
-using Enterspeed.Query.Sdk.Api.Models.Query;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 
-namespace Enterspeed.Query.Sdk.Api.Models
+namespace Enterspeed.Query.Sdk.Api.Models.Response
 {
     /// <summary>
     /// Custom converter for polymorphic QueryResponse that handles discriminator
@@ -217,73 +215,5 @@ namespace Enterspeed.Query.Sdk.Api.Models
             return newOptions;
         }
     }
-
-    // /// <summary>
-    // /// Generic polymorphic converter for any type with discriminator in any position
-    // /// </summary>
-    // public class PolymorphicJsonConverter<TBase> : JsonConverter<TBase> where TBase : class
-    // {
-    //     private readonly string _discriminatorPropertyName;
-    //     private readonly Dictionary<object, Type> _discriminatorToType;
-    //
-    //     public PolymorphicJsonConverter(
-    //         string discriminatorPropertyName,
-    //         Dictionary<object, Type> discriminatorToType)
-    //     {
-    //         _discriminatorPropertyName = discriminatorPropertyName ?? throw new ArgumentNullException(nameof(discriminatorPropertyName));
-    //         _discriminatorToType = discriminatorToType ?? throw new ArgumentNullException(nameof(discriminatorToType));
-    //     }
-    //
-    //     public override TBase Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    //     {
-    //         using (var jsonDoc = JsonDocument.ParseValue(ref reader))
-    //         {
-    //             var root = jsonDoc.RootElement;
-    //
-    //             if (!root.TryGetProperty(_discriminatorPropertyName, out var discriminatorElement))
-    //             {
-    //                 throw new JsonException($"Missing required discriminator property '{_discriminatorPropertyName}'");
-    //             }
-    //
-    //             var discriminatorValue = ExtractDiscriminatorValue(discriminatorElement);
-    //
-    //             if (!_discriminatorToType.TryGetValue(discriminatorValue, out var targetType))
-    //             {
-    //                 throw new JsonException(
-    //                     $"Unknown discriminator value: {discriminatorValue}. " +
-    //                     $"Expected one of: {string.Join(", ", _discriminatorToType.Keys)}");
-    //             }
-    //
-    //             var concreteObject = JsonSerializer.Deserialize(
-    //                 root.GetRawText(),
-    //                 targetType,
-    //                 options);
-    //
-    //             return (TBase)concreteObject;
-    //         }
-    //     }
-    //
-    //     public override void Write(Utf8JsonWriter writer, TBase value, JsonSerializerOptions options)
-    //     {
-    //         JsonSerializer.Serialize(writer, (object)value, options);
-    //     }
-    //
-    //     private static object ExtractDiscriminatorValue(JsonElement element)
-    //     {
-    //         switch (element.ValueKind)
-    //         {
-    //             case JsonValueKind.Number:
-    //                 return element.TryGetInt32(out var intValue) ? (object)intValue : element.GetInt64();
-    //             case JsonValueKind.String:
-    //                 return element.GetString();
-    //             case JsonValueKind.True:
-    //                 return true;
-    //             case JsonValueKind.False:
-    //                 return false;
-    //             default:
-    //                 throw new JsonException($"Unexpected discriminator type: {element.ValueKind}");
-    //         }
-    //     }
-    // }
 }
 

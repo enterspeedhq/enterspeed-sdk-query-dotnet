@@ -1,6 +1,4 @@
-using Enterspeed.Query.Sdk.Api.Models.MultiQuery;
-
-namespace Enterspeed.Query.Sdk.Api.Models.Query
+namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
 {
     /// <summary>
     /// Internal model representing a failed query response from the multi-query API.

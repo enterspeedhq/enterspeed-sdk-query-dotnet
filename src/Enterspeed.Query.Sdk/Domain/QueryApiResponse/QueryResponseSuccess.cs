@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using Enterspeed.Query.Sdk.Api.Models;
 
-namespace Enterspeed.Query.Sdk.Api.Models
+namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
 {
     public class QueryResponseSuccess : QueryResponse
     {

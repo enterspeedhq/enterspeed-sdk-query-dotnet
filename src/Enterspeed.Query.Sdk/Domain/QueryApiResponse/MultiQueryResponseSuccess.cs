@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Enterspeed.Query.Sdk.Api.Models.MultiQuery;
+using Enterspeed.Query.Sdk.Api.Models;
 
-namespace Enterspeed.Query.Sdk.Api.Models.Query
+namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
 {
     /// <summary>
     /// Internal model representing a successful query response from the multi-query API.
