@@ -11,8 +11,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Enterspeed.Query.Sdk.Api.Models.MultiQuery;
-using Enterspeed.Query.Sdk.Api.Models.Query;
+using Enterspeed.Query.Sdk.Api.Models.Response;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 
 namespace Enterspeed.Query.Sdk.Domain.Services
 {
@@ -29,7 +29,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             _serializer = jsonSerializer ?? throw new ArgumentNullException(nameof(jsonSerializer));
         }
 
-        public async Task<QueryApiResponse> Query(string apiKey, string index, QueryObject query,
+        public async Task<QueryApiResponse<IContent>> Query(string apiKey, string index, QueryObject query,
             CancellationToken? cancellationToken = null)
         {
             Validate(apiKey);
@@ -37,10 +37,10 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             var requestUri = RequestUri(index);
 
             var httpContent = new StringContent(_serializer.Serialize(query), Encoding.UTF8, "application/json");
-            return await QueryApiResponseSingle(apiKey, requestUri, httpContent, cancellationToken);
+            return await PostAndDeserializeAsync<IContent>(apiKey, requestUri, httpContent, cancellationToken);
         }
 
-        public async Task<QueryApiResponse<IContent>> QueryTyped(string apiKey, string index, QueryObject query,
+        public async Task<QueryApiResponse<T>> QueryTyped<T>(string apiKey, string index, QueryObject query,
             CancellationToken? cancellationToken = null)
         {
             Validate(apiKey);
@@ -48,7 +48,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             var requestUri = RequestUri(index);
 
             var httpContent = new StringContent(_serializer.Serialize(query), Encoding.UTF8, "application/json");
-            return await QueryApiResponseTypedSingle(apiKey, requestUri, httpContent, cancellationToken);
+            return await PostAndDeserializeAsync<T>(apiKey, requestUri, httpContent, cancellationToken);
         }
 
         public async Task<MultiQueryApiResponse> Query(string apiKey, List<MultiQueryObject> queries,
@@ -62,28 +62,14 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             return await QueryApiResponseMultiple(apiKey, requestUri, httpContent, cancellationToken);
         }
 
-        private async Task<QueryApiResponse<IContent>> QueryApiResponseTypedSingle(string apiKey, Uri requestUri,
-            HttpContent content, CancellationToken? cancellationToken = null)
-        {
-            content.Headers.Add("X-Api-Key", apiKey);
-
-            var response = await PostAsync(requestUri, content, cancellationToken);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            return new QueryApiResponse<IContent>
-            {
-                StatusCode = response.StatusCode,
-                Message = response.StatusCode != HttpStatusCode.OK && !string.IsNullOrWhiteSpace(responseString)
-                    ? _serializer.Deserialize<QueryApiError>(responseString)?.Message
-                    : null,
-                Response = response.StatusCode == HttpStatusCode.OK
-                    ? _serializer.Deserialize<QueryResponse<IContent>>(responseString)
-                    : null,
-                Headers = response.Headers
-            };
-        }
-
-        private async Task<QueryApiResponse> QueryApiResponseSingle(string apiKey, Uri requestUri, HttpContent content,
+        /// <summary>
+        /// Unified method to POST and deserialize single query responses.
+        /// Handles both success and error responses cleanly.
+        /// </summary>
+        private async Task<QueryApiResponse<T>> PostAndDeserializeAsync<T>(
+            string apiKey,
+            Uri requestUri,
+            HttpContent content,
             CancellationToken? cancellationToken = null)
         {
             content.Headers.Add("X-Api-Key", apiKey);
@@ -91,17 +77,41 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             var response = await PostAsync(requestUri, content, cancellationToken);
             var responseString = await response.Content.ReadAsStringAsync();
 
-            return new QueryApiResponse
+            var apiResponse = new QueryApiResponse<T>
             {
                 StatusCode = response.StatusCode,
-                Message = response.StatusCode != HttpStatusCode.OK && !string.IsNullOrWhiteSpace(responseString)
-                    ? _serializer.Deserialize<QueryApiError>(responseString)?.Message
-                    : null,
-                Response = response.StatusCode == HttpStatusCode.OK
-                    ? _serializer.Deserialize<QueryResponse>(responseString)
-                    : null,
                 Headers = response.Headers
             };
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                // Try to deserialize as success response
+                try
+                {
+                    apiResponse.RawResponse = _serializer.Deserialize<QueryResponseSuccess<T>>(responseString);
+                }
+                catch
+                {
+                    // If typed deserialization fails, it might be an error response
+                    var errorResponse = _serializer.Deserialize<QueryResponseError>(responseString);
+                    if (errorResponse != null)
+                    {
+                        apiResponse.RawResponse = errorResponse as IQueryResponse<T>;
+                        apiResponse.Message = errorResponse.Message;
+                    }
+                }
+            }
+            else
+            {
+                // HTTP error
+                var errorResponse = !string.IsNullOrWhiteSpace(responseString)
+                    ? _serializer.Deserialize<QueryApiError>(responseString)
+                    : null;
+
+                apiResponse.Message = errorResponse?.Message ?? $"HTTP {(int)response.StatusCode}";
+            }
+
+            return apiResponse;
         }
 
         private async Task<MultiQueryApiResponse> QueryApiResponseMultiple(string apiKey, Uri requestUri,
@@ -125,7 +135,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                 }
 
                 var multiq = _serializer.Deserialize<List<MultiQueryResponse>>(responseString);
-                
+
                 var response1 = new MultiQueryApiResponse
                 {
                     StatusCode = response.StatusCode,
