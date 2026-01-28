@@ -13,7 +13,6 @@ using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Api.Providers;
 using Configuration;
 using Enterspeed.Query.Sdk.Domain.Builders;
-using Enterspeed.Query.Sdk.Domain.Connection;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 using Enterspeed.Query.Sdk.Domain.Services;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;

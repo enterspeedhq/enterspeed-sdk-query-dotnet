@@ -15,7 +15,6 @@ using Enterspeed.Query.Sdk.Api.Providers;
 using Enterspeed.Query.Sdk.Api.Services;
 using Configuration;
 using Enterspeed.Query.Sdk.Domain.Builders;
-using Enterspeed.Query.Sdk.Domain.Connection;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 using Enterspeed.Query.Sdk.Domain.Services;
@@ -64,15 +63,7 @@ public class EnterspeedQueryServiceMultiQueryTests
             BaseAddress = new Uri(config.BaseUrl)
         };
 
-        // Create mock IHttpClientFactory
-        var mockHttpClientFactory = new Mock<IHttpClientFactory>();
-        mockHttpClientFactory
-            .Setup(x => x.CreateClient(It.IsAny<string>()))
-            .Returns(httpClient);
-
-        var queryConnection = new EnterspeedQueryConnection(mockHttpClientFactory.Object, configProvider);
-
-        _queryService = new EnterspeedQueryService(queryConnection, configProvider, _serializer);
+        _queryService = new EnterspeedQueryService(httpClient, configProvider, _serializer);
     }
 
     [Fact]

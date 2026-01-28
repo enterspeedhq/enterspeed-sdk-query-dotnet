@@ -11,7 +11,8 @@ namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
     {
         private readonly JsonSerializerOptions _options = new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true
         };
 
         public SystemTextJsonSerializer(IList<JsonConverter> converters = null)
@@ -25,8 +26,10 @@ namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
             }
             else
             {
-                _options.Converters.Add(new ContentConverter());
+                // Default converters when none provided
                 _options.Converters.Add(new FilterConverter());
+                _options.Converters.Add(new QueryResponseConverterFactory()); // For polymorphic QueryResponse<T>
+                _options.Converters.Add(new MultiQueryResponseConverter()); // For polymorphic MultiQueryResponse
             }
         }
 
