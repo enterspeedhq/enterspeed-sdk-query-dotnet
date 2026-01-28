@@ -1,12 +1,8 @@
-﻿using Enterspeed.Query.Sdk.Api.Models;
-using Enterspeed.Query.Sdk.Api.Providers;
+﻿using Enterspeed.Query.Sdk.Api.Providers;
 using Enterspeed.Query.Sdk.Api.Services;
-using Enterspeed.Query.Sdk.Domain.Connection;
 using Enterspeed.Query.Sdk.Domain.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -21,15 +17,15 @@ namespace Enterspeed.Query.Sdk.Domain.Services
         private readonly IJsonSerializer _serializer;
 
         public EnterspeedQueryService(
-            EnterspeedQueryConnection enterspeedQueryConnection,
+            HttpClient httpClient,
             IEnterspeedQueryConfigurationProvider queryConfigurationProvider,
             IJsonSerializer jsonSerializer)
-            : base(enterspeedQueryConnection, queryConfigurationProvider)
+            : base(httpClient, queryConfigurationProvider)
         {
             _serializer = jsonSerializer ?? throw new ArgumentNullException(nameof(jsonSerializer));
         }
 
-        public async Task<QueryApiResponse<IContent>> Query(string apiKey, string index, QueryObject query,
+        public Task<QueryApiResponse<Dictionary<string, object>>> Query(string apiKey, string index, QueryObject query,
             CancellationToken? cancellationToken = null)
         {
             Validate(apiKey);
