@@ -18,8 +18,8 @@ namespace Enterspeed.Query.Sdk.Api.Services
         /// <param name="index">The alias of the index to query</param>
         /// <param name="query">Will be turned in to the request body when posted</param>
         /// <param name="cancellationToken"></param>
-        /// <returns>A QueryApiResponse containing either ISuccess&lt;IContent&gt; or IFailure</returns>
-        Task<QueryApiResponse<IContent>> Query(string apiKey, string index, QueryObject query, CancellationToken? cancellationToken = null);
+        /// <returns>A QueryApiResponse containing either ISuccess&lt;Dictionary&lt;string, object&gt;&gt; or IFailure</returns>
+        Task<QueryApiResponse<Dictionary<string, object>>> Query(string apiKey, string index, QueryObject query, CancellationToken? cancellationToken = null);
 
         /// <summary>
         /// Creates a single query request with custom strongly-typed results.

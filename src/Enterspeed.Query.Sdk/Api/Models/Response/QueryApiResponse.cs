@@ -1,259 +1,187 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
-using Enterspeed.Query.Sdk.Api.Services;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;
 
 namespace Enterspeed.Query.Sdk.Api.Models.Response
 {
+
+    // We should be able to use non-generic version for simple use-cases
     /// <summary>
-    /// Unified response wrapper for single query API calls.
-    /// Provides access to strongly-typed query results with success/failure pattern.
+    /// Response wrapper for single query API calls (non-generic version).
+    /// Wraps the API response with HTTP metadata.
+    /// Results are returned as Dictionary&lt;string, object&gt;.
+    /// </summary>
+    public class QueryApiResponse
+    {
+        public HttpStatusCode StatusCode { get; set; }
+        public HttpResponseHeaders Headers { get; set; }
+        public string Message { get; set; }
+
+        /// <summary>
+        /// The SDK response (ISuccess&lt;Dictionary&lt;string, object&gt;&gt; or IFailure).
+        /// Use pattern matching: if (result.Response is ISuccess&lt;Dictionary&lt;string, object&gt;&gt; success) { ... }
+        /// </summary>
+        public IResponse<Dictionary<string, object>> Response { get; set; }
+
+        public bool IsSuccess => Response is ISuccess<Dictionary<string, object>>;
+    }
+
+    /// <summary>
+    /// Response wrapper for single query API calls.
+    /// Wraps the API response with HTTP metadata.
     /// </summary>
     /// <typeparam name="T">The expected type of the query results.</typeparam>
     public class QueryApiResponse<T>
     {
-        private readonly IJsonSerializer _serializer = new SystemTextJsonSerializer();
-        private IResponse<T> _cachedResponse;
-
         public HttpStatusCode StatusCode { get; set; }
         public HttpResponseHeaders Headers { get; set; }
         public string Message { get; set; }
 
         /// <summary>
-        /// The raw query response from the API.
+        /// The SDK response (ISuccess&lt;T&gt; or IFailure).
         /// </summary>
-        internal IQueryResponse<T> RawResponse { get; set; }
+        /// <remarks>
+        /// Use pattern matching to inspect the result:
+        /// <code>
+        /// if (result.Response is ISuccess&lt;T&gt; success)
+        /// {
+        ///     // Handle success
+        /// }
+        /// else if (result.Response is IFailure failure)
+        /// {
+        ///     // Handle failure
+        /// }
+        /// </code>
+        /// </remarks>
+        public IResponse<T> Response { get; set; }
 
         /// <summary>
-        /// Gets the unified response that implements either ISuccess&lt;T&gt; or IFailure.
+        /// Checks if the query was successful.
         /// </summary>
-        public IResponse<T> Response
-        {
-            get
-            {
-                if (_cachedResponse != null)
-                    return _cachedResponse;
-
-                _cachedResponse = ConvertToUnifiedResponse();
-                return _cachedResponse;
-            }
-        }
-
-        private IResponse<T> ConvertToUnifiedResponse()
-        {
-            // If HTTP call failed
-            if (StatusCode != HttpStatusCode.OK || RawResponse == null)
-            {
-                return new FailureResponseTyped<T>(new QueryError(
-                    Message ?? "Query failed",
-                    $"HTTP_{(int)StatusCode}"
-                ));
-            }
-
-            switch (RawResponse)
-            {
-                // If API returned an error response
-                case QueryResponseError errorResponse:
-                {
-                    var errors = new List<QueryError>();
-
-                    if (!string.IsNullOrWhiteSpace(errorResponse.Message))
-                    {
-                        errors.Add(new QueryError(errorResponse.Message));
-                    }
-
-                    if (errorResponse.Errors != null && errorResponse.Errors.Length > 0)
-                    {
-                        errors.AddRange(errorResponse.Errors.Select(err => new QueryError(err)));
-                    }
-
-                    return new FailureResponseTyped<T>(
-                        errors.Count > 0 ? errors : new List<QueryError> { new QueryError("Unknown error") }
-                    );
-                }
-                // If API returned a success response
-                case QueryResponseSuccess<T> successResponse:
-                    return new SuccessResponse<T>(
-                        successResponse.Results,
-                        successResponse.TotalResults,
-                        successResponse.Facets
-                    );
-                default:
-                    // Unexpected response type
-                    return new FailureResponseTyped<T>(new QueryError(
-                        "Unexpected response type",
-                        "UNEXPECTED_RESPONSE_TYPE"
-                    ));
-            }
-        }
+        public bool IsSuccess => Response is ISuccess<T>;
     }
 
     /// <summary>
-    /// Response container for multi-query API calls.
-    /// Provides access to individual query responses by query name.
-    /// Supports partial failures - one query can fail without affecting others.
+    /// Response wrapper for multi-query API calls.
+    /// Wraps the multi-query response list with HTTP metadata.
     /// </summary>
     public class MultiQueryApiResponse
     {
-        private readonly IJsonSerializer _serializer = new SystemTextJsonSerializer();
-        private readonly Dictionary<string, object> _cachedResponses = new Dictionary<string, object>();
+        private readonly Dictionary<(string QueryName, System.Type TargetType), object> _cachedResponses = new Dictionary<(string, System.Type), object>();
 
         public HttpStatusCode StatusCode { get; set; }
         public HttpResponseHeaders Headers { get; set; }
         public string Message { get; set; }
 
         /// <summary>
-        /// The raw response list from the API.
+        /// Raw API responses indexed by query name.
+        /// Each response contains the original data from the API.
+        /// Use Get&lt;T&gt;(queryName) to retrieve and convert to typed results.
         /// </summary>
-        public MultiQueryResponseList Response { get; set; }
+        internal Dictionary<string, MultiQueryResponse> Response { get; set; }
+
+        /// <summary>
+        /// Checks if all queries were successful.
+        /// </summary>
+        public bool IsSuccess => Response != null && Response.Values.All(r => r.Status == QueryStatus.Success);
 
         /// <summary>
         /// Retrieves a strongly-typed response for a specific query by name.
-        /// Returns ISuccess&lt;T&gt; if the query succeeded and type matches.
-        /// Returns IFailure if the query failed, key is missing, or type mismatch occurs.
+        /// Converts the raw API response to IResponse&lt;T&gt; on-demand.
         /// </summary>
-        /// <typeparam name="T">The expected type of the query results.</typeparam>
-        /// <param name="queryName">The unique key used when adding the query to the multi-query builder.</param>
-        /// <returns>An IResponse&lt;T&gt; that is either ISuccess&lt;T&gt; or IFailure.</returns>
         public IResponse<T> Get<T>(string queryName)
         {
             if (string.IsNullOrWhiteSpace(queryName))
             {
-                return CreateFailureResponse<T>(new QueryError(
-                    "Query name cannot be null or empty",
-                    "INVALID_QUERY_NAME"
-                ));
+                return new FailureResponse<T>(new QueryError { Message = "Query name cannot be null or empty" });
             }
 
-            if (Response == null)
+            if (Response == null) // TODO: Should this not be part of constructor validation? And implement constructor?
             {
-                return CreateFailureResponse<T>(new QueryError(
-                    "Response list is not initialized",
-                    "NO_RESPONSE"
-                ));
+                return new FailureResponse<T>(new QueryError { Message = "Response dictionary is not initialized" });
             }
 
-            // Check cache first
-            var cacheKey = $"{queryName}_{typeof(T).FullName}";
+            // Check if query exists
+            if (!Response.TryGetValue(queryName, out var apiResponse))
+            {
+                return new FailureResponse<T>(new QueryError { Message = $"Query '{queryName}' not found in response" });
+            }
+
+            // Check cache for typed conversion
+            var cacheKey = (queryName, typeof(T));
             if (_cachedResponses.TryGetValue(cacheKey, out var cached))
             {
                 return cached as IResponse<T>;
             }
 
-            // Look for error response first
-            var errorResponse = Response.GetErrorResponse()
-                .FirstOrDefault(x => x.Name == queryName);
-
-            if (errorResponse != null)
+            // Handle error responses
+            if (apiResponse is MultiQueryResponseError error)
             {
-                var errors = ConvertToQueryErrors(errorResponse);
-                var failure = CreateFailureResponse<T>(errors);
+                var queryError = new QueryError
+                {
+                    Index = error.Index,
+                    Message = error.Message ?? "Query failed",
+                    Errors = error.Errors
+                };
+                var failure = new FailureResponse<T>(queryError);
                 _cachedResponses[cacheKey] = failure;
                 return failure;
             }
 
-            // Look for success response
-            var successResponse = Response.GetSuccessResponse()
-                .FirstOrDefault(x => x.Name == queryName);
-
-            if (successResponse == null)
+            // Handle success responses - convert to typed results
+            if (apiResponse is MultiQueryResponseSuccess success)
             {
-                var failure = CreateFailureResponse<T>(new QueryError(
-                    $"Query '{queryName}' not found in response",
-                    "QUERY_NOT_FOUND"
-                ));
-                _cachedResponses[cacheKey] = failure;
-                return failure;
+                try
+                {
+                    var serializer = new SystemTextJsonSerializer();
+                    var typedResults = success.Results
+                        .Select(dict => serializer.Serialize(dict))
+                        .Select(json => serializer.Deserialize<T>(json))
+                        .Where(item => item != null)
+                        .ToList();
+
+                    var typedSuccessResponse = new QueryResponseSuccess<T>
+                    {
+                        TotalResults = success.TotalResults,
+                        Results = typedResults,
+                        Facets = success.Facets?.ToList() ?? new List<FacetResult>()
+                    };
+
+                    var typedSuccess = new SuccessResponse<T>(typedSuccessResponse);
+                    _cachedResponses[cacheKey] = typedSuccess;
+                    return typedSuccess;
+                }
+                catch (System.Exception ex)
+                {
+                    var failure = new FailureResponse<T>(new QueryError
+                    {
+                        Message = $"Failed to convert query '{queryName}' to type {typeof(T).Name}: {ex.Message}"
+                    });
+                    _cachedResponses[cacheKey] = failure;
+                    return failure;
+                }
             }
 
-            // Attempt to deserialize to the requested type
-            try
-            {
-                var typedResults = successResponse.Results
-                    .Select(dict => _serializer
-                    .Serialize(dict))
-                    .Select(serialized => _serializer.Deserialize<T>(serialized))
-                    .Where(deserialized => deserialized != null)
-                    .ToList();
-
-                var success = new SuccessResponse<T>(
-                    typedResults,
-                    successResponse.TotalResults,
-                    successResponse.Facets
-                );
-
-                _cachedResponses[cacheKey] = success;
-                return success;
-            }
-            catch (Exception ex)
-            {
-                var failure = CreateFailureResponse<T>(new QueryError(
-                    $"Failed to deserialize query '{queryName}' to type {typeof(T).Name}: {ex.Message}",
-                    "TYPE_MISMATCH"
-                ));
-                _cachedResponses[cacheKey] = failure;
-                return failure;
-            }
+            // Unknown response type
+            return new FailureResponse<T>(new QueryError { Message = "Unknown response type" });
         }
 
         /// <summary>
         /// Checks if a query with the specified name exists in the response.
         /// </summary>
-        /// <param name="queryName">The query name to check.</param>
-        /// <returns>True if the query exists (either as success or error); otherwise false.</returns>
-        public bool ContainsQuery(string queryName)
-        {
-            if (string.IsNullOrWhiteSpace(queryName) || Response == null)
-                return false;
-
-            return Response.GetSuccessResponse().Any(x => x.Name == queryName) ||
-                   Response.GetErrorResponse().Any(x => x.Name == queryName);
-        }
+        public bool ContainsQuery(string queryName) =>
+            !string.IsNullOrWhiteSpace(queryName)
+            && Response != null
+            && Response.ContainsKey(queryName);
 
         /// <summary>
         /// Gets all query names present in the response.
         /// </summary>
-        /// <returns>A list of all query names.</returns>
-        public IReadOnlyList<string> GetQueryNames()
-        {
-            if (Response == null)
-                return new List<string>().AsReadOnly();
-
-            var names = new List<string>();
-            names.AddRange(Response.GetSuccessResponse().Select(x => x.Name));
-            names.AddRange(Response.GetErrorResponse().Select(x => x.Name));
-            return names.Distinct().ToList().AsReadOnly();
-        }
-
-        private static IResponse<T> CreateFailureResponse<T>(QueryError error)
-        {
-            return new FailureResponseTyped<T>(new List<QueryError> { error });
-        }
-
-        private static IResponse<T> CreateFailureResponse<T>(List<QueryError> errors)
-        {
-            return new FailureResponseTyped<T>(errors);
-        }
-
-        private static List<QueryError> ConvertToQueryErrors(MultiQueryResponseError errorResponse)
-        {
-            var errors = new List<QueryError>();
-
-            if (!string.IsNullOrWhiteSpace(errorResponse.Message))
-            {
-                errors.Add(new QueryError(errorResponse.Message));
-            }
-
-            if (errorResponse.Errors != null && errorResponse.Errors.Length > 0)
-            {
-                errors.AddRange(errorResponse.Errors.Select(err => new QueryError(err)));
-            }
-
-            return errors.Count > 0 ? errors : new List<QueryError> { new QueryError("Unknown error") };
-        }
+        public IReadOnlyList<string> GetQueryNames() => Response == null
+            ? new List<string>().AsReadOnly()
+            : Response.Keys.ToList().AsReadOnly();
     }
 }

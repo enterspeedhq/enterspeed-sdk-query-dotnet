@@ -1,5 +1,7 @@
 namespace Enterspeed.Query.Sdk.Tests.Api.Models.Test.Response;
 
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Enterspeed.Query.Sdk.Api.Models;
@@ -36,7 +38,14 @@ public class SuccessResponseTests
                 Name = "category"
             }
         };
-        var response = new SuccessResponse<TestData>(results, 10, facets);
+
+        var response = new SuccessResponse<TestData>(new QueryResponseSuccess<TestData>
+        {
+            Results = results,
+            TotalResults = 10,
+            Facets = facets,
+        });
+
         return Verify(response);
     }
 

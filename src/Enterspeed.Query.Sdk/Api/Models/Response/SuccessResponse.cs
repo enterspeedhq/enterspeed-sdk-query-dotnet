@@ -1,41 +1,43 @@
 using System.Collections.Generic;
 using System.Linq;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 
 namespace Enterspeed.Query.Sdk.Api.Models.Response
 {
     /// <summary>
-    /// Implementation of ISuccess for successful query responses.
-    /// Exposes strongly-typed data and does not expose errors.
+    /// Wraps QueryResponseSuccess from the API for SDK consumers.
     /// </summary>
     /// <typeparam name="T">The type of the response data.</typeparam>
     public class SuccessResponse<T> : ISuccess<T>
     {
-        private readonly List<T> _results;
-        private readonly List<FacetResult> _facets;
+        private readonly QueryResponseSuccess<T> _apiResponse;
 
-        public SuccessResponse(List<T> results, int totalResults, List<FacetResult> facets = null)
+        public SuccessResponse(QueryResponseSuccess<T> apiResponse)
         {
-            _results = results ?? new List<T>();
-            TotalResults = totalResults;
-            _facets = facets ?? new List<FacetResult>();
+            _apiResponse = apiResponse ?? throw new System.ArgumentNullException(nameof(apiResponse));
         }
 
-        /// <inheritdoc />
+        internal SuccessResponse(List<T> results, int totalResults, List<FacetResult> facets = null)
+        {
+            _apiResponse = new QueryResponseSuccess<T>
+            {
+                Results = results ?? new List<T>(),
+                TotalResults = totalResults,
+                Facets = facets ?? new List<FacetResult>()
+            };
+        }
+
         public bool Status => true;
 
-        /// <inheritdoc />
-        public IReadOnlyList<T> Results => _results.AsReadOnly();
-
-        /// <inheritdoc />
-        public int TotalResults { get; }
-
-        /// <inheritdoc />
-        public IReadOnlyList<FacetResult> Facets => _facets.AsReadOnly();
-
-        /// <inheritdoc />
         public T Value()
         {
-            return _results.FirstOrDefault();
+            return _apiResponse.Results.FirstOrDefault();
         }
+
+        public IReadOnlyList<T> Results => _apiResponse.Results?.AsReadOnly() ?? new List<T>().AsReadOnly();
+
+        public int TotalResults => _apiResponse.TotalResults;
+
+        public IReadOnlyList<FacetResult> Facets => _apiResponse.Facets?.AsReadOnly() ?? new List<FacetResult>().AsReadOnly();
     }
 }

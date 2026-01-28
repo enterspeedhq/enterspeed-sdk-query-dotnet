@@ -44,7 +44,7 @@ public class MultiQueryApiResponseTests
         // Arrange
         var response = new MultiQueryApiResponse
         {
-            Response = new MultiQueryResponseList()
+            Response = new Dictionary<string, MultiQueryResponse>()
         };
 
         // Act
@@ -60,7 +60,7 @@ public class MultiQueryApiResponseTests
         // Arrange
         var response = new MultiQueryApiResponse
         {
-            Response = new MultiQueryResponseList()
+            Response = new Dictionary<string, MultiQueryResponse>()
         };
 
         // Act
@@ -90,10 +90,10 @@ public class MultiQueryApiResponseTests
     public Task Get_WithMissingQueryKey_ReturnsFailure()
     {
         // Arrange
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>());
+        var responseList = new List<MultiQueryResponse>();
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -118,14 +118,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             errorResponse
-        });
+        };
 
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -173,14 +173,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             successResponse
-        });
+        };
 
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -228,13 +228,13 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             successResponse
-        });
+        };
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -291,14 +291,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             booksResponse,
             authorsResponse
-        });
+        };
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -345,14 +345,14 @@ public class MultiQueryApiResponseTests
             Message = "Query failed"
         };
 
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             successResponse,
             errorResponse
-        });
+        };
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -392,14 +392,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             successResponse
-        });
+        };
 
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -420,14 +420,14 @@ public class MultiQueryApiResponseTests
             Index = "books-index"
         };
 
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             successResponse
-        });
+        };
 
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -447,14 +447,14 @@ public class MultiQueryApiResponseTests
             Index = "books-index"
         };
 
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             errorResponse
-        });
+        };
 
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -468,10 +468,10 @@ public class MultiQueryApiResponseTests
     public Task ContainsQuery_WithNonExistingQuery_ReturnsFalse()
     {
         // Arrange
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>());
+        var responseList = new List<MultiQueryResponse>();
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -485,7 +485,7 @@ public class MultiQueryApiResponseTests
     public Task GetQueryNames_WithMultipleQueries_ReturnsAllNames()
     {
         // Arrange
-        var responses = new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             new MultiQueryResponseSuccess
             {
@@ -501,10 +501,9 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new MultiQueryResponseList(responses);
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -568,14 +567,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new MultiQueryResponseList(new List<MultiQueryResponse>
+        var responseList = new List<MultiQueryResponse>
         {
             successResponse
-        });
+        };
 
         var response = new MultiQueryApiResponse
         {
-            Response = responseList
+            Response = responseList.ToMultiQueryResponse()
         };
 
         // Act
@@ -681,15 +680,7 @@ public class MultiQueryApiResponseTests
             BaseAddress = new Uri(config.BaseUrl)
         };
 
-        // Create mock IHttpClientFactory
-        var mockHttpClientFactory = new Mock<IHttpClientFactory>();
-        mockHttpClientFactory
-            .Setup(x => x.CreateClient(It.IsAny<string>()))
-            .Returns(httpClient);
-
-        var queryConnection = new EnterspeedQueryConnection(mockHttpClientFactory.Object, configProvider);
-
-        var queryService = new EnterspeedQueryService(queryConnection, configProvider, serializer);
+        var queryService = new EnterspeedQueryService(httpClient, configProvider, serializer);
 
         // Execute the query
         var response = await queryService.Query("test-api-key", request.Queries.ToList(), CancellationToken.None);
@@ -813,15 +804,7 @@ public class MultiQueryApiResponseTests
             BaseAddress = new Uri(config.BaseUrl)
         };
 
-        // Create mock IHttpClientFactory
-        var mockHttpClientFactory = new Mock<IHttpClientFactory>();
-        mockHttpClientFactory
-            .Setup(x => x.CreateClient(It.IsAny<string>()))
-            .Returns(httpClient);
-
-        var queryConnection = new EnterspeedQueryConnection(mockHttpClientFactory.Object, configProvider);
-
-        var queryService = new EnterspeedQueryService(queryConnection, configProvider, serializer);
+        var queryService = new EnterspeedQueryService(httpClient, configProvider, serializer);
 
         // Execute
         var response = await queryService.Query("test-api-key", request.Queries.ToList(), CancellationToken.None);
@@ -840,7 +823,7 @@ public class MultiQueryApiResponseTests
         // Invalid query should fail with proper error details
         var invalidResponse = response.Get<TestBook>("invalid-query");
         invalidResponse.Status.Should().BeFalse();
-        var invalidFailure = invalidResponse as FailureResponseTyped<TestBook>;
+        var invalidFailure = invalidResponse as FailureResponse<TestBook>;
         invalidFailure.Should().NotBeNull();
         invalidFailure?.Errors.Should().NotBeEmpty();
         invalidFailure?.Errors.Should().Contain(e => e.Message.Contains("Index not found"));

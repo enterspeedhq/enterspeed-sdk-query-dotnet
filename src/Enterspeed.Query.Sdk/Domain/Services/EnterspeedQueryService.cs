@@ -28,12 +28,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
         public Task<QueryApiResponse<Dictionary<string, object>>> Query(string apiKey, string index, QueryObject query,
             CancellationToken? cancellationToken = null)
         {
-            Validate(apiKey);
-
-            var requestUri = RequestUri(index);
-
-            var httpContent = new StringContent(_serializer.Serialize(query), Encoding.UTF8, "application/json");
-            return await PostAndDeserializeAsync<IContent>(apiKey, requestUri, httpContent, cancellationToken);
+            return QueryTyped<Dictionary<string, object>>(apiKey, index, query, cancellationToken);
         }
 
         public async Task<QueryApiResponse<T>> QueryTyped<T>(string apiKey, string index, QueryObject query,
@@ -44,7 +39,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             var requestUri = RequestUri(index);
 
             var httpContent = new StringContent(_serializer.Serialize(query), Encoding.UTF8, "application/json");
-            return await PostAndDeserializeAsync<T>(apiKey, requestUri, httpContent, cancellationToken);
+            return await QueryApiResponseSingle<T>(apiKey, requestUri, index, httpContent, cancellationToken);
         }
 
         public async Task<MultiQueryApiResponse> Query(string apiKey, List<MultiQueryObject> queries,
@@ -58,56 +53,68 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             return await QueryApiResponseMultiple(apiKey, requestUri, httpContent, cancellationToken);
         }
 
+
         /// <summary>
-        /// Unified method to POST and deserialize single query responses.
-        /// Handles both success and error responses cleanly.
+        /// POST and deserialize single query responses.
+        /// Uses polymorphic deserialization and converts to IResponse directly.
         /// </summary>
-        private async Task<QueryApiResponse<T>> PostAndDeserializeAsync<T>(
+        private async Task<QueryApiResponse<T>> QueryApiResponseSingle<T>(
             string apiKey,
             Uri requestUri,
+            string index,
             HttpContent content,
             CancellationToken? cancellationToken = null)
         {
             content.Headers.Add("X-Api-Key", apiKey);
 
-            var response = await PostAsync(requestUri, content, cancellationToken);
-            var responseString = await response.Content.ReadAsStringAsync();
+            var httpResponse = await PostAsync(requestUri, content, cancellationToken);
+            var responseString = await httpResponse.Content.ReadAsStringAsync();
 
-            var apiResponse = new QueryApiResponse<T>
+            try
             {
-                StatusCode = response.StatusCode,
-                Headers = response.Headers
-            };
+                var response = _serializer.Deserialize<QueryResponse<T>>(responseString);
+                // Convert to SDK response type
 
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                // Try to deserialize as success response
-                try
+                if (response is QueryResponseSuccess<T> successResponse)
                 {
-                    apiResponse.RawResponse = _serializer.Deserialize<QueryResponseSuccess<T>>(responseString);
-                }
-                catch
-                {
-                    // If typed deserialization fails, it might be an error response
-                    var errorResponse = _serializer.Deserialize<QueryResponseError>(responseString);
-                    if (errorResponse != null)
+                    var apiResponse = new QueryApiResponse<T>
                     {
-                        apiResponse.RawResponse = errorResponse as IQueryResponse<T>;
-                        apiResponse.Message = errorResponse.Message;
-                    }
+                        StatusCode = httpResponse.StatusCode,
+                        Headers = httpResponse.Headers,
+                        Response = new SuccessResponse<T>(successResponse)
+                    };
+                    return apiResponse;
                 }
-            }
-            else
+
+                if (response is QueryResponseError<T> errorResponse)
+                {
+                    var apiResponse = new QueryApiResponse<T>
+                    {
+                        StatusCode = httpResponse.StatusCode,
+                        Headers = httpResponse.Headers,
+                        Message = errorResponse.Message,
+                        Response =  new FailureResponse<T>(errorResponse.ToQueryError(index))
+                    };
+                    return apiResponse;
+                }
+            } catch (Exception ex)
             {
-                // HTTP error
-                var errorResponse = !string.IsNullOrWhiteSpace(responseString)
-                    ? _serializer.Deserialize<QueryApiError>(responseString)
-                    : null;
-
-                apiResponse.Message = errorResponse?.Message ?? $"HTTP {(int)response.StatusCode}";
+                return new QueryApiResponse<T>
+                {
+                    StatusCode = httpResponse.StatusCode,
+                    Headers = httpResponse.Headers,
+                    Message = $"Failed to deserialize response: {ex.Message}",
+                    Response = new FailureResponse<T>(new QueryError { Message = $"Failed to deserialize response: {ex.Message}" })
+                };
             }
 
-            return apiResponse;
+            return new QueryApiResponse<T>
+            {
+                StatusCode = httpResponse.StatusCode,
+                Headers = httpResponse.Headers,
+                Message = "Unknown response type",
+                Response = new FailureResponse<T>(new QueryError { Message = "Unknown response type" })
+            };
         }
 
         private async Task<MultiQueryApiResponse> QueryApiResponseMultiple(string apiKey, Uri requestUri,
@@ -116,43 +123,42 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             try
             {
                 content.Headers.Add("X-Api-Key", apiKey);
-                var response = await PostAsync(requestUri, content, cancellationToken);
-                var responseString = await response.Content.ReadAsStringAsync();
+                var httpResponse = await PostAsync(requestUri, content, cancellationToken);
+                var responseString = await httpResponse.Content.ReadAsStringAsync();
 
-                if (!response.IsSuccessStatusCode)
+                var response = _serializer.Deserialize<List<MultiQueryResponse>>(responseString);
+
+                // Convert to SDK response type using extension method
+                var convertedResponses = MultiQueryResponseExtensions.ToMultiQueryResponse(response);
+
+                // Convert to SDK response type
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     return new MultiQueryApiResponse
                     {
-                        StatusCode = response.StatusCode,
-                        Message = "Error",
-                        Response = null,
-                        Headers = response.Headers
+                        StatusCode = httpResponse.StatusCode,
+                        Headers = httpResponse.Headers,
+                        Message = httpResponse.StatusCode == System.Net.HttpStatusCode.OK ? "" : "No valid responses received, Bad Request",
+                        Response = convertedResponses
                     };
                 }
 
-                var multiq = _serializer.Deserialize<List<MultiQueryResponse>>(responseString);
-
-                var response1 = new MultiQueryApiResponse
-                {
-                    StatusCode = response.StatusCode,
-                    Message = string.Join("; ", multiq
-                        .Where(x => x is MultiQueryResponseError)
-                        .Cast<MultiQueryResponseError>()
-                        .SelectMany(x => new[] { x.Message }.Concat(x.Errors ?? Array.Empty<string>()))
-                        .Where(x => !string.IsNullOrEmpty(x))),
-                    Response = new MultiQueryResponseList(multiq),
-                    Headers = response.Headers
-                };
-                return response1;
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                return new MultiQueryApiResponse
+                {
+                    StatusCode = System.Net.HttpStatusCode.BadRequest,
+                    Message = $"Failed to deserialize multi query response: {ex.Message}",
+                    Response = null
+                };
             }
 
-            return new MultiQueryApiResponse();
+            return new MultiQueryApiResponse
+            {
+                StatusCode = System.Net.HttpStatusCode.BadRequest,
+                Message = $"Failed with unknown error",
+                Response = null
+            };
         }
     }
-
-
 }

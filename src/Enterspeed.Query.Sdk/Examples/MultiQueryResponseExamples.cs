@@ -89,11 +89,11 @@ namespace Enterspeed.Query.Sdk.Examples
             }
             else
             {
-                var failure = productsResponse as FailureResponseTyped<Product>;
+                var failure = productsResponse as FailureResponse<Product>;
                 Console.WriteLine("Products query failed:");
                 foreach (var error in failure.Errors)
                 {
-                    Console.WriteLine($"  [{error.Code}] {error.Message}");
+                    Console.WriteLine($"  {error.Message}");
                 }
             }
 
@@ -127,11 +127,11 @@ namespace Enterspeed.Query.Sdk.Examples
                     }
                     break;
 
-                case FailureResponseTyped<Product> failure:
+                case FailureResponse<Product> failure:
                     Console.WriteLine("Query failed:");
                     foreach (var error in failure.Errors)
                     {
-                        Console.WriteLine($"  - {error.Code}: {error.Message}");
+                        Console.WriteLine($"  - {error.Message}");
                     }
                     break;
             }
@@ -173,9 +173,9 @@ namespace Enterspeed.Query.Sdk.Examples
 
             if (!wrongType.Status)
             {
-                var failure = wrongType as FailureResponseTyped<User>;
-                // Error code will be TYPE_MISMATCH
-                Console.WriteLine($"{failure.Errors[0].Code}: {failure.Errors[0].Message}");
+                var failure = wrongType as FailureResponse<User>;
+                // Error message will indicate type mismatch
+                Console.WriteLine($"{failure.Errors[0].Message}");
             }
         }
 
@@ -195,7 +195,7 @@ namespace Enterspeed.Query.Sdk.Examples
             var nonExistent = response.Get<Product>("nonExistent");
             if (!nonExistent.Status)
             {
-                var failure = nonExistent as FailureResponseTyped<Product>;
+                var failure = nonExistent as FailureResponse<Product>;
                 // Error code will be QUERY_NOT_FOUND
                 Console.WriteLine($"Query not found: {failure.Errors[0].Message}");
             }
