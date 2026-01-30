@@ -1,5 +1,6 @@
 using System;
 using Enterspeed.Query.Sdk.Domain.Builders;
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
 

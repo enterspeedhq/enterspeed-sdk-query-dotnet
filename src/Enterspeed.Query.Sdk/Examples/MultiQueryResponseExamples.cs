@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Api.Services;
 using Enterspeed.Query.Sdk.Domain.Builders;
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
 using Enterspeed.Query.Sdk.Domain.Models;
 
 namespace Enterspeed.Query.Sdk.Examples
@@ -89,7 +90,7 @@ namespace Enterspeed.Query.Sdk.Examples
             }
             else
             {
-                var failure = productsResponse as FailureResponse<Product>;
+                var failure = productsResponse as ErrorResponse<Product>;
                 Console.WriteLine("Products query failed:");
                 foreach (var error in failure.Errors)
                 {
@@ -127,7 +128,7 @@ namespace Enterspeed.Query.Sdk.Examples
                     }
                     break;
 
-                case FailureResponse<Product> failure:
+                case ErrorResponse<Product> failure:
                     Console.WriteLine("Query failed:");
                     foreach (var error in failure.Errors)
                     {
@@ -173,7 +174,7 @@ namespace Enterspeed.Query.Sdk.Examples
 
             if (!wrongType.Status)
             {
-                var failure = wrongType as FailureResponse<User>;
+                var failure = wrongType as ErrorResponse<User>;
                 // Error message will indicate type mismatch
                 Console.WriteLine($"{failure.Errors[0].Message}");
             }
@@ -195,7 +196,7 @@ namespace Enterspeed.Query.Sdk.Examples
             var nonExistent = response.Get<Product>("nonExistent");
             if (!nonExistent.Status)
             {
-                var failure = nonExistent as FailureResponse<Product>;
+                var failure = nonExistent as ErrorResponse<Product>;
                 // Error code will be QUERY_NOT_FOUND
                 Console.WriteLine($"Query not found: {failure.Errors[0].Message}");
             }

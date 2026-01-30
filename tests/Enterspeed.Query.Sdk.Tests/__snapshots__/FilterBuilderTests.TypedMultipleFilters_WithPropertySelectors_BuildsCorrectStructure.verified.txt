@@ -1,0 +1,21 @@
+﻿[
+  {
+    And: [
+      {
+        Operator: equals,
+        Value: true,
+        CaseInsensitive: false,
+        Field: active
+      },
+      {
+        Operator: greaterThan,
+        Field: stock
+      },
+      {
+        Operator: lessThan,
+        Value: 500.0,
+        Field: price
+      }
+    ]
+  }
+]

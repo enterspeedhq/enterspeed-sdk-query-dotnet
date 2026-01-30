@@ -1,0 +1,23 @@
+﻿[
+  {
+    And: [
+      {
+        Operator: equals,
+        Value: true,
+        CaseInsensitive: false,
+        Field: active
+      },
+      {
+        Operator: equals,
+        Value: electronics,
+        CaseInsensitive: false,
+        Field: category
+      },
+      {
+        Operator: greaterThan,
+        Value: 50.0,
+        Field: price
+      }
+    ]
+  }
+]

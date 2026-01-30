@@ -1,0 +1,8 @@
+﻿{
+  Status: false,
+  Errors: [
+    {
+      Message: Response dictionary is not initialized
+    }
+  ]
+}

@@ -5,7 +5,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
     /// <summary>
     /// Represents a failed query response with error information.
     /// </summary>
-    public interface IFailure<T> : IResponse<T>
+    public interface IError<T> : IResponse<T>
     {
         /// <summary>
         /// Gets the collection of errors that caused the query to fail.

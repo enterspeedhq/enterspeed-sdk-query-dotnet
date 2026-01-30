@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
+﻿﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -28,6 +28,7 @@ namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
             {
                 // Default converters when none provided
                 _options.Converters.Add(new FilterConverter());
+                _options.Converters.Add(new SortOrderJsonConverter());
                 _options.Converters.Add(new QueryResponseConverterFactory()); // For polymorphic QueryResponse<T>
                 _options.Converters.Add(new MultiQueryResponseConverter()); // For polymorphic MultiQueryResponse
             }

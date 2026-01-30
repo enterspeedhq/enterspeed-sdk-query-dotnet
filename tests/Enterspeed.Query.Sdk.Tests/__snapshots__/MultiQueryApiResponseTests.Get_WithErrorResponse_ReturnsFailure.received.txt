@@ -1,0 +1,13 @@
+﻿{
+  Status: false,
+  Errors: [
+    {
+      Index: books-index,
+      Message: Query execution failed,
+      Errors: [
+        Invalid filter,
+        Timeout occurred
+      ]
+    }
+  ]
+}

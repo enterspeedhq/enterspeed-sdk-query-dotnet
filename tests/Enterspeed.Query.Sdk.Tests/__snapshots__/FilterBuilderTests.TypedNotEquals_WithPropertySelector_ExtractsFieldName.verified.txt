@@ -1,0 +1,8 @@
+﻿[
+  {
+    Operator: notEquals,
+    Value: Electronics,
+    CaseInsensitive: false,
+    Field: department
+  }
+]

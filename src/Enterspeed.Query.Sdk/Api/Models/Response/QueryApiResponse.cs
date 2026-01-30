@@ -7,28 +7,6 @@ using Enterspeed.Query.Sdk.Domain.SystemTextJson;
 
 namespace Enterspeed.Query.Sdk.Api.Models.Response
 {
-
-    // We should be able to use non-generic version for simple use-cases
-    /// <summary>
-    /// Response wrapper for single query API calls (non-generic version).
-    /// Wraps the API response with HTTP metadata.
-    /// Results are returned as Dictionary&lt;string, object&gt;.
-    /// </summary>
-    public class QueryApiResponse
-    {
-        public HttpStatusCode StatusCode { get; set; }
-        public HttpResponseHeaders Headers { get; set; }
-        public string Message { get; set; }
-
-        /// <summary>
-        /// The SDK response (ISuccess&lt;Dictionary&lt;string, object&gt;&gt; or IFailure).
-        /// Use pattern matching: if (result.Response is ISuccess&lt;Dictionary&lt;string, object&gt;&gt; success) { ... }
-        /// </summary>
-        public IResponse<Dictionary<string, object>> Response { get; set; }
-
-        public bool IsSuccess => Response is ISuccess<Dictionary<string, object>>;
-    }
-
     /// <summary>
     /// Response wrapper for single query API calls.
     /// Wraps the API response with HTTP metadata.
@@ -92,22 +70,22 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
         /// Retrieves a strongly-typed response for a specific query by name.
         /// Converts the raw API response to IResponse&lt;T&gt; on-demand.
         /// </summary>
-        public IResponse<T> Get<T>(string queryName)
+        public IResponse<T> Get<T>(string queryName) // TODO: Map the errors from the QueryResponseError to QueryError
         {
             if (string.IsNullOrWhiteSpace(queryName))
             {
-                return new FailureResponse<T>(new QueryError { Message = "Query name cannot be null or empty" });
+                return new ErrorResponse<T>(new QueryError { Message = "Query name cannot be null or empty", } );
             }
 
-            if (Response == null) // TODO: Should this not be part of constructor validation? And implement constructor?
+            if (Response is null) // TODO: Should this not be part of constructor validation? And implement constructor?
             {
-                return new FailureResponse<T>(new QueryError { Message = "Response dictionary is not initialized" });
+                return new ErrorResponse<T>(new QueryError { Message = "Response dictionary is not initialized" });
             }
 
             // Check if query exists
             if (!Response.TryGetValue(queryName, out var apiResponse))
             {
-                return new FailureResponse<T>(new QueryError { Message = $"Query '{queryName}' not found in response" });
+                return new ErrorResponse<T>(new QueryError { Message = $"Query '{queryName}' not found in response" });
             }
 
             // Check cache for typed conversion
@@ -123,11 +101,14 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
                 var queryError = new QueryError
                 {
                     Index = error.Index,
-                    Message = error.Message ?? "Query failed",
+                    Name = error.Name,
+                    Message = error.Message,
                     Errors = error.Errors
                 };
-                var failure = new FailureResponse<T>(queryError);
+
+                var failure = new ErrorResponse<T>(queryError);
                 _cachedResponses[cacheKey] = failure;
+
                 return failure;
             }
 
@@ -136,7 +117,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
             {
                 try
                 {
-                    var serializer = new SystemTextJsonSerializer();
+                    var serializer = new SystemTextJsonSerializer(); // TODO Consider injecting serializer via constructor for flexibility
                     var typedResults = success.Results
                         .Select(dict => serializer.Serialize(dict))
                         .Select(json => serializer.Deserialize<T>(json))
@@ -154,9 +135,9 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
                     _cachedResponses[cacheKey] = typedSuccess;
                     return typedSuccess;
                 }
-                catch (System.Exception ex)
+                catch (System.Exception ex) // TODO Check if this key is attached to a specific type or we can try with another type? YES!
                 {
-                    var failure = new FailureResponse<T>(new QueryError
+                    var failure = new ErrorResponse<T>(new QueryError
                     {
                         Message = $"Failed to convert query '{queryName}' to type {typeof(T).Name}: {ex.Message}"
                     });
@@ -166,7 +147,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
             }
 
             // Unknown response type
-            return new FailureResponse<T>(new QueryError { Message = "Unknown response type" });
+            return new ErrorResponse<T>(new QueryError { Message = "Unknown response type" });
         }
 
         /// <summary>

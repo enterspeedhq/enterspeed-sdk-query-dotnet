@@ -2,7 +2,7 @@
   Status: false,
   Errors: [
     {
-      Message: Query name cannot be null or empty
+      Message: Test error message
     }
   ]
 }

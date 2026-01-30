@@ -1,8 +1,11 @@
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+
 namespace Enterspeed.Query.Sdk.Tests.Domain.Builders.Tests;
 
+using Enterspeed.Query.Sdk.Domain.Builders.Filter;
 using System;
 using System.Threading.Tasks;
-using Enterspeed.Query.Sdk.Domain.Builders;
 using FluentAssertions;
 using static VerifyXunit.Verifier;
 using Xunit;
@@ -277,6 +280,163 @@ public class FilterBuilderTests
             .Equals("status", "active", caseInsensitive: true)
             .Contains("title", "*hoodie*", caseInsensitive: true)
             .GreaterThan("price", 50);
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    #endregion
+
+    #region Typed Property Selector Tests
+
+    private record Product
+    {
+        public string Name { get; set; }
+        public bool Active { get; set; }
+        public int Stock { get; set; }
+        public decimal Price { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        public string Department { get; set; }
+    }
+
+    private record ProductWithJsonPropertyName
+    {
+        [JsonPropertyName("Name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("isActive")]
+        public bool Active { get; set; }
+
+        [JsonPropertyName("stock")]
+        public int Stock { get; set; }
+    }
+
+    [Fact]
+    public Task TypedEquals_WithPropertySelector_ExtractsFieldNameAndConvertsToCamelCase()
+    {
+        var builder = new FilterBuilder();
+        builder.Equals<Product, bool>(p => p.Active, true);
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedEquals_WithCaseInsensitive_SetsCaseInsensitiveProperty()
+    {
+        var builder = new FilterBuilder();
+        builder.Equals<Product, string>(p => p.Name, "Hoodie", caseInsensitive: true);
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedNotEquals_WithPropertySelector_ExtractsFieldName()
+    {
+        var builder = new FilterBuilder();
+        builder.NotEquals<Product, string>(p => p.Department, "Electronics");
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedGreaterThan_WithPropertySelector_ExtractsFieldName()
+    {
+        var builder = new FilterBuilder();
+        builder.GreaterThan<Product, int>(p => p.Stock, 10);
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedGreaterThanOrEquals_WithPropertySelector_ExtractsFieldName()
+    {
+        var builder = new FilterBuilder();
+        builder.GreaterThanOrEquals<Product, decimal>(p => p.Price, 100.50m);
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedLessThan_WithPropertySelector_ExtractsFieldName()
+    {
+        var builder = new FilterBuilder();
+        builder.LessThan<Product, int>(p => p.Stock, 50);
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedLessThanOrEquals_WithPropertySelector_ExtractsFieldName()
+    {
+        var builder = new FilterBuilder();
+        builder.LessThanOrEquals<Product, decimal>(p => p.Price, 200m);
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedContains_WithPropertySelector_ExtractsFieldName()
+    {
+        var builder = new FilterBuilder();
+        builder.Contains<Product, string>(p => p.Name, "*shirt*");
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedIn_WithPropertySelector_ExtractsFieldName()
+    {
+        var builder = new FilterBuilder();
+        builder.In<Product, string>(p => p.Department, "Clothing", "Shoes", "Accessories");
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedIn_WithPropertySelectorIEnumerable_ExtractsFieldName()
+    {
+        var builder = new FilterBuilder();
+        builder.In<Product, string>(p => p.Department, new List<string>
+        {
+            "Clothing",
+            "Shoes",
+            "Accessories"
+        });
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedMultipleFilters_WithPropertySelectors_BuildsCorrectStructure()
+    {
+        var builder = new FilterBuilder();
+        builder
+            .Equals<Product, bool>(p => p.Active, true)
+            .GreaterThan<Product, int>(p => p.Stock, 0)
+            .LessThan<Product, decimal>(p => p.Price, 500m);
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedAndString_MixedFilters_BuildsCorrectStructure()
+    {
+        var builder = new FilterBuilder();
+        builder
+            .Equals<Product, bool>(p => p.Active, true)
+            .Equals("category", "electronics")
+            .GreaterThan<Product, decimal>(p => p.Price, 50m);
+        var result = builder.BuildFilters();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task TypedEquals_WithJsonPropertyNameAttribute_UsesJsonName()
+    {
+        var builder = new FilterBuilder<ProductWithJsonPropertyName>();
+        builder
+            .Equals(p => p.Active, true)
+            .Equals(p => p.Stock, 12)
+            .Equals(p => p.Name, "Gadget");
         var result = builder.BuildFilters();
         return Verify(result);
     }
