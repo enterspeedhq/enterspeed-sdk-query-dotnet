@@ -1,7 +1,9 @@
 using System;
+using System.Linq.Expressions;
+using Enterspeed.Query.Sdk.Domain.Builders.Filter;
 using Enterspeed.Query.Sdk.Domain.Models;
 
-namespace Enterspeed.Query.Sdk.Domain.Builders
+namespace Enterspeed.Query.Sdk.Domain.Builders.Query
 {
     /// <summary>
     /// Fluent interface for building individual queries within a multi-query request.
@@ -16,11 +18,34 @@ namespace Enterspeed.Query.Sdk.Domain.Builders
         IQueryBuilder WithPagination(int page, int pageSize);
 
         /// <summary>
+        /// Sets the pagination for the query using a configuration delegate.
+        /// </summary>
+        /// <param name="configure">Action to configure pagination settings.</param>
+        /// <returns>The query builder for method chaining.</returns>
+        IQueryBuilder WithPagination(Action<Pagination> configure);
+
+        /// <summary>
+        /// Sets the pagination for the query using a Pagination Class.
+        /// </summary>
+        /// <param name="pagination">A pagination class.</param>
+        /// <returns>The query builder for method chaining.</returns>
+        IQueryBuilder WithPagination(Pagination pagination);
+
+        /// <summary>
         /// Adds a sort criterion to the query.
         /// </summary>
         /// <param name="field">The field to sort by.</param>
         /// <param name="order">The sort order (Asc or Desc).</param>
         IQueryBuilder SortBy(string field, SortOrder order = SortOrder.Asc);
+
+        /// <summary>
+        /// Adds a sort criterion to the query using a strongly-typed property selector.
+        /// </summary>
+        /// <typeparam name="T">The entity type.</typeparam>
+        /// <param name="fieldSelector">Expression to select the property to sort by.</param>
+        /// <param name="order">The sort order (Asc or Desc).</param>
+        IQueryBuilder SortBy<T>(Expression<Func<T, object>> fieldSelector, SortOrder order = SortOrder.Asc);
+
 
         /// <summary>
         /// Adds filters using a fluent lambda-based builder pattern.
@@ -32,7 +57,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders
         /// <example>
         /// .Where(f => f
         ///     .Equals("status", "active")
-        ///     .GreaterThan("age", 18))
+        ///     .GreaterThan(age", 18))
         /// </example>
         IQueryBuilder Where(Action<IFilterBuilder> configure);
 

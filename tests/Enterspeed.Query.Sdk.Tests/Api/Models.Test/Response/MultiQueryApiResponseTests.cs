@@ -1,3 +1,5 @@
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
+
 namespace Enterspeed.Query.Sdk.Tests.Api.Models.Test.Response;
 using System;
 using System.Collections.Generic;
@@ -823,11 +825,10 @@ public class MultiQueryApiResponseTests
         // Invalid query should fail with proper error details
         var invalidResponse = response.Get<TestBook>("invalid-query");
         invalidResponse.Status.Should().BeFalse();
-        var invalidFailure = invalidResponse as FailureResponse<TestBook>;
+        var invalidFailure = invalidResponse as ErrorResponse<TestBook>;
         invalidFailure.Should().NotBeNull();
         invalidFailure?.Errors.Should().NotBeEmpty();
-        invalidFailure?.Errors.Should().Contain(e => e.Message.Contains("Index not found"));
-        invalidFailure?.Errors.Should().Contain(e => e.Message.Contains("The specified index does not exist"));
+        invalidFailure?.Errors.Should().Contain(e => e.Errors.Contains("The specified index does not exist"));
     }
 
     #endregion

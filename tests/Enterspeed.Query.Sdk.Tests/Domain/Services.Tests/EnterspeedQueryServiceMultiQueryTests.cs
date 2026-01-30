@@ -1,3 +1,5 @@
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
+
 namespace Enterspeed.Query.Sdk.Tests.Domain.Services.Tests;
 
 using System;
@@ -273,7 +275,7 @@ public class EnterspeedQueryServiceMultiQueryTests
         var invalidResponse = response.Get<Product>("invalid");
         invalidResponse.Status.Should().BeFalse("invalid query should fail");
 
-        var invalidFailure = invalidResponse as FailureResponse<Product>;
+        var invalidFailure = invalidResponse as ErrorResponse<Product>;
         invalidFailure.Should().NotBeNull();
         invalidFailure?.Errors.Should().NotBeEmpty();
         invalidFailure?.Errors.Should().Contain(e => e.Message.Contains("Index not found"));
@@ -321,7 +323,7 @@ public class EnterspeedQueryServiceMultiQueryTests
         var missingResponse = response.Get<Product>("nonexistent");
         missingResponse.Status.Should().BeFalse();
 
-        var failure = missingResponse as FailureResponse<Product>;
+        var failure = missingResponse as ErrorResponse<Product>;
     }
 
     [Fact]
@@ -721,7 +723,7 @@ public class EnterspeedQueryServiceMultiQueryTests
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         result.Message.Should().Be("Query is not valid");
-        if (result.Response is IFailure<string> failure)
+        if (result.Response is IError<string> failure)
         {
             failure.Errors.Should().Contain(e => e.Message.Contains("Field not found: invalidField"));
         }
@@ -792,10 +794,10 @@ public class EnterspeedQueryServiceMultiQueryTests
         var query2Response = response.Get<Product>("query2");
         query2Response.Status.Should().BeFalse();
 
-        var query1Failure = query1Response as FailureResponse<Product>;
+        var query1Failure = query1Response as ErrorResponse<Product>;
         query1Failure?.Errors.Should().Contain(e => e.Message.Contains("Index not found"));
 
-        var query2Failure = query2Response as FailureResponse<Product>;
+        var query2Failure = query2Response as ErrorResponse<Product>;
         query2Failure?.Errors.Should().Contain(e => e.Message.Contains("Permission denied"));
     }
 

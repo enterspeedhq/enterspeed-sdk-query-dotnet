@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 
 namespace Enterspeed.Query.Sdk.Domain.Services
 {
@@ -93,7 +94,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                         StatusCode = httpResponse.StatusCode,
                         Headers = httpResponse.Headers,
                         Message = errorResponse.Message,
-                        Response =  new FailureResponse<T>(errorResponse.ToQueryError(index))
+                        Response =  new ErrorResponse<T>(errorResponse.ToQueryError(index))
                     };
                     return apiResponse;
                 }
@@ -104,7 +105,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                     StatusCode = httpResponse.StatusCode,
                     Headers = httpResponse.Headers,
                     Message = $"Failed to deserialize response: {ex.Message}",
-                    Response = new FailureResponse<T>(new QueryError { Message = $"Failed to deserialize response: {ex.Message}" })
+                    Response = new ErrorResponse<T>(new QueryError { Message = $"Failed to deserialize response: {ex.Message}" })
                 };
             }
 
@@ -113,7 +114,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                 StatusCode = httpResponse.StatusCode,
                 Headers = httpResponse.Headers,
                 Message = "Unknown response type",
-                Response = new FailureResponse<T>(new QueryError { Message = "Unknown response type" })
+                Response = new ErrorResponse<T>(new QueryError { Message = "Unknown response type" })
             };
         }
 
@@ -129,7 +130,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                 var response = _serializer.Deserialize<List<MultiQueryResponse>>(responseString);
 
                 // Convert to SDK response type using extension method
-                var convertedResponses = MultiQueryResponseExtensions.ToMultiQueryResponse(response);
+                var convertedResponses = response.ToMultiQueryResponse();
 
                 // Convert to SDK response type
                 if (httpResponse.StatusCode == System.Net.HttpStatusCode.OK)

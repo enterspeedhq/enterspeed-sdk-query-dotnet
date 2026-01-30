@@ -1,8 +1,11 @@
+
 namespace Enterspeed.Query.Sdk.Tests.Domain.Builders.Tests;
 
 using System;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Enterspeed.Query.Sdk.Domain.Builders;
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
+using Enterspeed.Query.Sdk.Domain.Builders.Query;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
 using FluentAssertions;
@@ -220,7 +223,8 @@ public class MultiQueryBuilderTests
                 .SortBy("updatedAt", SortOrder.Desc)
                 .Where(new EqualsOperator<bool>
                 {
-                    Field = "active", Value = true
+                    Field = "active",
+                    Value = true
                 })
                 .WithFacet("department"))
             .AddQuery("products", "product-index", q => q
@@ -230,7 +234,6 @@ public class MultiQueryBuilderTests
         var request = builder.Build();
         return Verify(request);
     }
-
     #endregion
 
     #region Helper Method Tests
@@ -293,10 +296,7 @@ public class MultiQueryBuilderTests
                 .WithPagination(0, 25)
                 .SortBy("lastName", SortOrder.Asc)
                 .SortBy("firstName", SortOrder.Asc)
-                .Where(new EqualsOperator<bool>
-                    {
-                        Field = "isActive", Value = true
-                    })
+                .Where(x => x.Equals("isActive", true))
                 .WithFacet("role", size: 10)
                 .WithAliases("summary"))
             .AddQuery("recentOrders", "order-index", builder => builder
@@ -327,6 +327,48 @@ public class MultiQueryBuilderTests
             })
             .Build();
         return Verify(request);
+    }
+    // TODO TEST HERE WHAT TO DO:
+    [Fact] // TODO: Fix and enable
+    public Task Build_ComplexMultiQueryWithType_MatchesAPIContract()
+    {
+        var builder = new MultiQueryBuilder();
+        builder
+            .AddQuery<User>("users", "user-index", q => q
+                .WithPagination(new Pagination
+                {
+                    Page = 0,
+                    PageSize = 10
+                })
+                .SortBy("updatedAt", SortOrder.Desc)
+                .Where(x => x.Equals(user => user.Active, true))
+                .WithFacet("department"))
+            .AddQuery<Product>("products", "product-index", q => q
+                .WithPagination(new Pagination
+                {
+                    Page = 0,
+                    PageSize = 20
+                })
+                .SortBy(x => x.Price, SortOrder.Asc)
+                .WithAliases("tile", "detail"));
+        var request = builder.Build();
+        return Verify(request);
+    }
+
+    private record User
+    {
+        [JsonPropertyName("updatedAt")]
+        public DateTime UpdatedAt { get; set; }
+        [JsonPropertyName("active")]
+        public bool Active { get; set; }
+        [JsonPropertyName("department")]
+        public string Department { get; set; }
+    }
+
+    private record Product
+    {
+        [JsonPropertyName("price")]
+        public decimal Price { get; set; }
     }
 
     #endregion

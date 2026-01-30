@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
+using Enterspeed.Query.Sdk.Domain.Builders.Query;
 using Enterspeed.Query.Sdk.Domain.Models;
 
-namespace Enterspeed.Query.Sdk.Domain.Builders
+namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
 {
     /// <summary>
     /// Fluent builder for constructing multi-query requests.
     /// Allows adding multiple queries with unique keys that will be executed in a single API call.
     /// </summary>
-    public class MultiQueryBuilder
+    public class MultiQueryBuilder : IMultiQueryBuilder
     {
         private const int MaxQueriesPerRequest = 5;
         private readonly Dictionary<string, MultiQueryObject> _queries = new Dictionary<string, MultiQueryObject>();
@@ -37,6 +38,23 @@ namespace Enterspeed.Query.Sdk.Domain.Builders
                 throw new ArgumentNullException(nameof(builderAction));
 
             var queryBuilder = new QueryBuilder();
+            builderAction(queryBuilder);
+            var queryObject = queryBuilder.Build();
+
+            AddQueryInternal(key, index, queryObject);
+            return this;
+        }
+
+        public MultiQueryBuilder AddQuery<T>(string key, string index, Action<IQueryBuilder<T>> builderAction)
+        {
+            ValidateKey(key);
+            ValidateIndex(index);
+            ValidateMaxQueries();
+
+            if (builderAction == null)
+                throw new ArgumentNullException(nameof(builderAction));
+
+            var queryBuilder = new QueryBuilder<T>();
             builderAction(queryBuilder);
             var queryObject = queryBuilder.Build();
 
@@ -76,6 +94,15 @@ namespace Enterspeed.Query.Sdk.Domain.Builders
         {
             if (_queries.Count == 0)
                 throw new InvalidOperationException("Cannot build a multi-query request with no queries. Add at least one query before calling Build().");
+
+            if (_queries.Count == 1)
+            {
+                var singleQuery = new List<MultiQueryObject>(_queries.Values)[0];
+                return new MultiQueryRequest(new List<MultiQueryObject>
+                {
+                    singleQuery
+                });
+            }
 
             var queryList = new List<MultiQueryObject>(_queries.Values);
             return new MultiQueryRequest(queryList);

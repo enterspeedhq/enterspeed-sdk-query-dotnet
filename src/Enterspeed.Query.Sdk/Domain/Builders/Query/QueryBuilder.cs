@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Text.Json.Serialization;
+using System.Reflection;
+using Enterspeed.Query.Sdk.Domain.Builders.Filter;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.LogicalOperators;
 
-namespace Enterspeed.Query.Sdk.Domain.Builders
+namespace Enterspeed.Query.Sdk.Domain.Builders.Query
 {
     /// <summary>
     /// Concrete implementation of IQueryBuilder for building individual queries.
@@ -34,6 +38,21 @@ namespace Enterspeed.Query.Sdk.Domain.Builders
             return this;
         }
 
+        public IQueryBuilder WithPagination(Action<Pagination> configure)
+        {
+            var pagination = new Pagination();
+            configure(pagination);
+            _pagination = pagination;
+            return this;
+        }
+
+        public IQueryBuilder WithPagination(Pagination pagination)
+        {
+            _pagination = pagination;
+            return this;
+        }
+
+
         public IQueryBuilder SortBy(string field, SortOrder order = SortOrder.Asc)
         {
             if (string.IsNullOrWhiteSpace(field))
@@ -44,6 +63,53 @@ namespace Enterspeed.Query.Sdk.Domain.Builders
             _sorts.Add(new Sort { Field = field, Order = order });
             return this;
         }
+
+        public IQueryBuilder SortBy<T>(Expression<Func<T, object>> fieldSelector, SortOrder order = SortOrder.Asc)
+        {
+            if (fieldSelector == null)
+            {
+                throw new ArgumentNullException(nameof(fieldSelector));
+            }
+
+            // Handle boxing/unboxing conversions (e.g., value types to object)
+            var body = fieldSelector.Body;
+            if (body is UnaryExpression unary)
+            {
+                body = unary.Operand;
+            }
+
+            if (!(body is MemberExpression member))
+            {
+                throw new ArgumentException("Invalid property selector.", nameof(fieldSelector));
+            }
+
+            var propertyInfo = member.Member as PropertyInfo;
+            string fieldName;
+            if (propertyInfo != null)
+            {
+                var jsonPropertyNameAttr = propertyInfo.GetCustomAttribute<JsonPropertyNameAttribute>();
+                if (jsonPropertyNameAttr != null && !string.IsNullOrWhiteSpace(jsonPropertyNameAttr.Name))
+                {
+                    fieldName = jsonPropertyNameAttr.Name;
+                }
+                else
+                {
+                    fieldName = member.Member.Name;
+                }
+            }
+            else
+            {
+                fieldName = member.Member.Name;
+            }
+
+            _sorts.Add(new Sort
+            {
+                Field = fieldName,
+                Order = order
+            });
+            return this;
+        }
+
 
         public IQueryBuilder Where(Action<IFilterBuilder> configure)
         {
@@ -63,6 +129,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders
 
             return this;
         }
+
 
         public IQueryBuilder Where(IOperator filter)
         {

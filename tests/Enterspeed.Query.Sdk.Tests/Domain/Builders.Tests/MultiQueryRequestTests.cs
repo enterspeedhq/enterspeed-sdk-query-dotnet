@@ -1,3 +1,5 @@
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
+
 namespace Enterspeed.Query.Sdk.Tests.Domain.Builders.Tests;
 
 using System.Collections.Generic;
