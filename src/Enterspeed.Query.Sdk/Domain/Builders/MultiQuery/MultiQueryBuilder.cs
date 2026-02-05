@@ -35,7 +35,9 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
             ValidateMaxQueries();
 
             if (builderAction == null)
+            {
                 throw new ArgumentNullException(nameof(builderAction));
+            }
 
             var queryBuilder = new QueryBuilder();
             builderAction(queryBuilder);
@@ -52,7 +54,9 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
             ValidateMaxQueries();
 
             if (builderAction == null)
+            {
                 throw new ArgumentNullException(nameof(builderAction));
+            }
 
             var queryBuilder = new QueryBuilder<T>();
             builderAction(queryBuilder);
@@ -79,7 +83,9 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
             ValidateMaxQueries();
 
             if (query == null)
+            {
                 throw new ArgumentNullException(nameof(query));
+            }
 
             AddQueryInternal(key, index, query);
             return this;
@@ -93,7 +99,9 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
         public MultiQueryRequest Build()
         {
             if (_queries.Count == 0)
+            {
                 throw new InvalidOperationException("Cannot build a multi-query request with no queries. Add at least one query before calling Build().");
+            }
 
             if (_queries.Count == 1)
             {
@@ -137,38 +145,30 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
         private void ValidateKey(string key)
         {
             if (string.IsNullOrWhiteSpace(key))
+            {
                 throw new ArgumentException("Query key cannot be null or empty.", nameof(key));
+            }
 
             if (_queries.ContainsKey(key))
+            {
                 throw new ArgumentException($"A query with the key '{key}' has already been added. Each query must have a unique key.", nameof(key));
+            }
         }
 
         private void ValidateIndex(string index)
         {
             if (string.IsNullOrWhiteSpace(index))
+            {
                 throw new ArgumentException("Index cannot be null or empty.", nameof(index));
+            }
         }
 
         private void ValidateMaxQueries()
         {
             if (_queries.Count >= MaxQueriesPerRequest)
+            {
                 throw new InvalidOperationException($"Cannot add more than {MaxQueriesPerRequest} queries to a single multi-query request. This is a limit imposed by the Enterspeed Query API.");
+            }
         }
     }
 }
-
-/*
- * Usage Example:
- *
- * var request = new MultiQueryBuilder()
- *     .AddQuery("users", "user-index", builder => builder
- *         .WithPagination(0, 5)
- *         .SortBy("updatedAt", SortOrder.Desc)
- *         .Where(new EqualsOperator { Field = "status", Value = "active" }))
- *     .AddQuery("products", "product-index", new QueryObject
- *     {
- *         Pagination = new Pagination { Page = 0, PageSize = 10 }
- *     })
- *     .Build();
- */
-

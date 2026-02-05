@@ -27,8 +27,6 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         /// <returns>The query builder for method chaining.</returns>
         new IQueryBuilder<T> WithPagination(Action<Pagination> configure);
 
-        new IQueryBuilder<T> WithPagination(Pagination pagination);
-
         /// <summary>
         /// Adds a sort criterion using a string field name.
         /// </summary>
@@ -40,7 +38,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         /// <summary>
         /// Adds a sort criterion using a property selector with implicit entity type.
         /// </summary>
-        /// <param name="fieldSelector">Expression to select the property to sort by.</param>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
         /// <param name="order">The sort order (Asc or Desc).</param>
         /// <returns>The query builder for method chaining.</returns>
         IQueryBuilder<T> SortBy(Expression<Func<T, object>> fieldSelector, SortOrder order = SortOrder.Asc);
@@ -61,7 +59,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         /// <summary>
         /// Adds a facet aggregation using a string field name.
         /// </summary>
-        /// <param name="field">The field to facet on.</param>
+        /// <param name="field">The field to facet on and has force lowercasing.</param>
         /// <param name="name">Optional name for the facet (defaults to field name).</param>
         /// <param name="size">Maximum number of facet values to return.</param>
         /// <returns>The query builder for method chaining.</returns>
@@ -70,7 +68,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         /// <summary>
         /// Adds a facet aggregation using a property selector with implicit entity type.
         /// </summary>
-        /// <param name="fieldSelector">Expression to select the property to facet on.</param>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
         /// <param name="name">Optional name for the facet (defaults to field name).</param>
         /// <param name="size">Maximum number of facet values to return.</param>
         /// <returns>The query builder for method chaining.</returns>

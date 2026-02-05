@@ -23,7 +23,7 @@
   },
   Facets: [
     {
-      Name: ,
+      Name: category,
       Field: category,
       Size: 15
     }

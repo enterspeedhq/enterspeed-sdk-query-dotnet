@@ -39,12 +39,6 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
-        IQueryBuilder IQueryBuilder.WithPagination(Pagination pagination)
-        {
-            _innerBuilder.WithPagination(pagination);
-            return this;
-        }
-
         IQueryBuilder IQueryBuilder.SortBy(string field, SortOrder order)
         {
             _innerBuilder.SortBy(field, order);
@@ -53,6 +47,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
 
         IQueryBuilder IQueryBuilder.SortBy<TEntity>(Expression<Func<TEntity, object>> fieldSelector, SortOrder order)
         {
+
             return _innerBuilder.SortBy(fieldSelector, order);
         }
 
@@ -101,12 +96,6 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
-        public IQueryBuilder<T> WithPagination(Pagination pagination)
-        {
-            _innerBuilder.WithPagination(pagination);
-            return this;
-        }
-
         public IQueryBuilder<T> SortBy(string field, SortOrder order = SortOrder.Asc)
         {
             _innerBuilder.SortBy(field, order);
@@ -115,7 +104,9 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
 
         public IQueryBuilder<T> SortBy(Expression<Func<T, object>> fieldSelector, SortOrder order = SortOrder.Asc)
         {
-            _innerBuilder.SortBy(fieldSelector, order);
+            var fieldName = GetFieldName(fieldSelector);
+
+            _innerBuilder.SortBy(fieldName, order);
             return this;
         }
 
@@ -140,7 +131,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
 
         public IQueryBuilder<T> WithFacet(string field, string name = null, int size = 10)
         {
-            _innerBuilder.WithFacet(field, name, size);
+            _innerBuilder.WithFacet(ToCamelCase(field), name, size);
             return this;
         }
 
@@ -151,6 +142,31 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
                 throw new ArgumentNullException(nameof(fieldSelector));
             }
 
+            var fieldName = GetFieldName(fieldSelector);
+
+            _innerBuilder.WithFacet(fieldName, name, size);
+            return this;
+        }
+
+
+        public IQueryBuilder<T> WithAliases(params string[] aliases)
+        {
+            _innerBuilder.WithAliases(aliases);
+            return this;
+        }
+
+        private static string ToCamelCase(string value)
+        {
+            if (string.IsNullOrEmpty(value) || char.IsLower(value[0]))
+            {
+                return value;
+            }
+
+            return char.ToLowerInvariant(value[0]) + value.Substring(1);
+        }
+
+        private static string GetFieldName(Expression<Func<T, object>> fieldSelector)
+        {
             // Extract field name from expression, respecting [JsonPropertyName]
             var body = fieldSelector.Body;
             if (body is UnaryExpression unary)
@@ -182,24 +198,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
                 fieldName = ToCamelCase(member.Member.Name);
             }
 
-            _innerBuilder.WithFacet(fieldName, name, size);
-            return this;
-        }
-
-        public IQueryBuilder<T> WithAliases(params string[] aliases)
-        {
-            _innerBuilder.WithAliases(aliases);
-            return this;
-        }
-
-        private static string ToCamelCase(string value)
-        {
-            if (string.IsNullOrEmpty(value) || char.IsLower(value[0]))
-            {
-                return value;
-            }
-
-            return char.ToLowerInvariant(value[0]) + value.Substring(1);
+            return fieldName;
         }
     }
 }

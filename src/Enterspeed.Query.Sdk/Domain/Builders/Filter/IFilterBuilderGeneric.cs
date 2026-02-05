@@ -20,23 +20,23 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// <param name="value">The value to compare against.</param>
         /// <param name="caseInsensitive">Optional. If true and operator supports it, performs case-insensitive comparison.</param>
         /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder<T> Equals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null);
+        IFilterBuilder<T> Equals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false);
 
         /// <summary>
         /// Adds a not-equals filter using a property selector with implicit entity type.
         /// </summary>
         /// <typeparam name="TProp">The property type to compare.</typeparam>
-        /// <param name="fieldSelector">Expression to select the property to filter on.</param>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
         /// <param name="value">The value to compare against.</param>
         /// <param name="caseInsensitive">Optional. If true and operator supports it, performs case-insensitive comparison.</param>
         /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder<T> NotEquals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null);
+        IFilterBuilder<T> NotEquals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false);
 
         /// <summary>
         /// Adds a greater-than filter using a property selector with implicit entity type.
         /// </summary>
         /// <typeparam name="TProp">The property type to compare.</typeparam>
-        /// <param name="fieldSelector">Expression to select the property to filter on.</param>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
         /// <param name="value">The value to compare against.</param>
         /// <returns>The filter builder for method chaining.</returns>
         IFilterBuilder<T> GreaterThan<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value);
@@ -45,7 +45,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// Adds a greater-than-or-equals filter using a property selector with implicit entity type.
         /// </summary>
         /// <typeparam name="TProp">The property type to compare.</typeparam>
-        /// <param name="fieldSelector">Expression to select the property to filter on.</param>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
         /// <param name="value">The value to compare against.</param>
         /// <returns>The filter builder for method chaining.</returns>
         IFilterBuilder<T> GreaterThanOrEquals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value);
@@ -54,7 +54,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// Adds a less-than filter using a property selector with implicit entity type.
         /// </summary>
         /// <typeparam name="TProp">The property type to compare.</typeparam>
-        /// <param name="fieldSelector">Expression to select the property to filter on.</param>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
         /// <param name="value">The value to compare against.</param>
         /// <returns>The filter builder for method chaining.</returns>
         IFilterBuilder<T> LessThan<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value);
@@ -63,7 +63,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// Adds a less-than-or-equals filter using a property selector with implicit entity type.
         /// </summary>
         /// <typeparam name="TProp">The property type to compare.</typeparam>
-        /// <param name="fieldSelector">Expression to select the property to filter on.</param>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
         /// <param name="value">The value to compare against.</param>
         /// <returns>The filter builder for method chaining.</returns>
         IFilterBuilder<T> LessThanOrEquals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value);
@@ -72,17 +72,17 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// Adds a contains filter using a property selector with implicit entity type.
         /// </summary>
         /// <typeparam name="TProp">The property type to search.</typeparam>
-        /// <param name="fieldSelector">Expression to select the property to filter on.</param>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
         /// <param name="value">The value to search for (supports wildcards).</param>
         /// <param name="caseInsensitive">Optional. If true and operator supports it, performs case-insensitive comparison.</param>
         /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder<T> Contains<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null);
+        IFilterBuilder<T> Contains<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false);
 
         /// <summary>
         /// Adds an IN filter using a property selector with implicit entity type.
         /// </summary>
         /// <typeparam name="TProp">The property type to match.</typeparam>
-        /// <param name="fieldSelector">Expression to select the property to filter on.</param>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
         /// <param name="values">The collection of values to match against.</param>
         /// <returns>The filter builder for method chaining.</returns>
         IFilterBuilder<T> In<TProp>(Expression<Func<T, TProp>> fieldSelector, params TProp[] values);

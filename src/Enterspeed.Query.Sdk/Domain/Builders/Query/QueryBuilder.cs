@@ -46,13 +46,6 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
-        public IQueryBuilder WithPagination(Pagination pagination)
-        {
-            _pagination = pagination;
-            return this;
-        }
-
-
         public IQueryBuilder SortBy(string field, SortOrder order = SortOrder.Asc)
         {
             if (string.IsNullOrWhiteSpace(field))
@@ -66,41 +59,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
 
         public IQueryBuilder SortBy<T>(Expression<Func<T, object>> fieldSelector, SortOrder order = SortOrder.Asc)
         {
-            if (fieldSelector == null)
-            {
-                throw new ArgumentNullException(nameof(fieldSelector));
-            }
-
-            // Handle boxing/unboxing conversions (e.g., value types to object)
-            var body = fieldSelector.Body;
-            if (body is UnaryExpression unary)
-            {
-                body = unary.Operand;
-            }
-
-            if (!(body is MemberExpression member))
-            {
-                throw new ArgumentException("Invalid property selector.", nameof(fieldSelector));
-            }
-
-            var propertyInfo = member.Member as PropertyInfo;
-            string fieldName;
-            if (propertyInfo != null)
-            {
-                var jsonPropertyNameAttr = propertyInfo.GetCustomAttribute<JsonPropertyNameAttribute>();
-                if (jsonPropertyNameAttr != null && !string.IsNullOrWhiteSpace(jsonPropertyNameAttr.Name))
-                {
-                    fieldName = jsonPropertyNameAttr.Name;
-                }
-                else
-                {
-                    fieldName = member.Member.Name;
-                }
-            }
-            else
-            {
-                fieldName = member.Member.Name;
-            }
+            var fieldName = GetFieldName(fieldSelector);
 
             _sorts.Add(new Sort
             {
@@ -179,7 +138,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             _facets.Add(new Facet
             {
                 Field = field,
-                Name = name ?? "",
+                Name = name ?? field,
                 Size = size
             });
 
@@ -232,6 +191,52 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             }
 
             return queryObject;
+        }
+
+        private static string GetFieldName<T>(Expression<Func<T, object>> fieldSelector)
+        {
+            // Extract field name from expression, respecting [JsonPropertyName]
+            var body = fieldSelector.Body;
+            if (body is UnaryExpression unary)
+            {
+                body = unary.Operand;
+            }
+
+            if (!(body is MemberExpression member))
+            {
+                throw new ArgumentException("Expression must be a member access expression (e.g., p => p.PropertyName)", nameof(fieldSelector));
+            }
+
+            var propertyInfo = member.Member as PropertyInfo;
+            string fieldName;
+            if (propertyInfo != null)
+            {
+                var jsonPropertyNameAttr = propertyInfo.GetCustomAttribute<JsonPropertyNameAttribute>();
+                if (jsonPropertyNameAttr != null && !string.IsNullOrWhiteSpace(jsonPropertyNameAttr.Name))
+                {
+                    fieldName = jsonPropertyNameAttr.Name;
+                }
+                else
+                {
+                    fieldName = ToCamelCase(propertyInfo.Name);
+                }
+            }
+            else
+            {
+                fieldName = ToCamelCase(member.Member.Name);
+            }
+
+            return fieldName;
+        }
+
+        private static string ToCamelCase(string value)
+        {
+            if (string.IsNullOrEmpty(value) || char.IsLower(value[0]))
+            {
+                return value;
+            }
+
+            return char.ToLowerInvariant(value[0]) + value.Substring(1);
         }
     }
 }

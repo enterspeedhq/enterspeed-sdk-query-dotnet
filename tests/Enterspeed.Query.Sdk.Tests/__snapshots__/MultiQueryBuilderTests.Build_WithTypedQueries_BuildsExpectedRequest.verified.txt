@@ -23,7 +23,7 @@
       },
       Facets: [
         {
-          Name: ,
+          Name: department,
           Field: department,
           Size: 10
         }
@@ -33,7 +33,7 @@
       Index: product-index,
       Name: products,
       Aliases: [
-        tile,
+        title,
         detail
       ],
       Sort: [

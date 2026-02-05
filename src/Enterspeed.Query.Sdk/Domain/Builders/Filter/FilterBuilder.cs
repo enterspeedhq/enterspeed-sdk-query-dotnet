@@ -19,29 +19,27 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         private readonly List<IOperator> _filters = new List<IOperator>();
 
 
-        public IFilterBuilder Equals<TValue>(string field, TValue value, bool? caseInsensitive = null)
+        public IFilterBuilder Equals<TValue>(string field, TValue value, bool caseInsensitive = false)
         {
-            var op = new EqualsOperator<TValue> { Field = field, Value = value };
-            SetCaseInsensitiveIfSupported(op, caseInsensitive);
+            var op = new EqualsOperator<TValue> { Field = field, Value = value, CaseInsensitive = caseInsensitive};
             _filters.Add(op);
             return this;
         }
 
-        public IFilterBuilder Equals<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null)
+        public IFilterBuilder Equals<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false)
         {
             var fieldName = ExtractFieldName(fieldSelector);
             return Equals(fieldName, value, caseInsensitive);
         }
 
-        public IFilterBuilder NotEquals<TValue>(string field, TValue value, bool? caseInsensitive = null)
+        public IFilterBuilder NotEquals<TValue>(string field, TValue value, bool caseInsensitive = false)
         {
-            var op = new NotEqualsOperator<TValue> { Field = field, Value = value };
-            SetCaseInsensitiveIfSupported(op, caseInsensitive);
+            var op = new NotEqualsOperator<TValue> { Field = field, Value = value, CaseInsensitive = caseInsensitive};
             _filters.Add(op);
             return this;
         }
 
-        public IFilterBuilder NotEquals<T, TValue>(Expression<Func<T, TValue>> fieldSelector, TValue value, bool? caseInsensitive = null)
+        public IFilterBuilder NotEquals<T, TValue>(Expression<Func<T, TValue>> fieldSelector, TValue value, bool caseInsensitive = false)
         {
             var fieldName = ExtractFieldName(fieldSelector);
             return NotEquals(fieldName, value, caseInsensitive);
@@ -95,15 +93,14 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
             return LessThanOrEquals(fieldName, value);
         }
 
-        public IFilterBuilder Contains<TValue>(string field, TValue value, bool? caseInsensitive = null)
+        public IFilterBuilder Contains<TValue>(string field, TValue value, bool caseInsensitive = false)
         {
-            var op = new ContainsOperator<TValue> { Field = field, Value = value };
-            SetCaseInsensitiveIfSupported(op, caseInsensitive);
+            var op = new ContainsOperator<TValue> { Field = field, Value = value, CaseInsensitive = caseInsensitive};
             _filters.Add(op);
             return this;
         }
 
-        public IFilterBuilder Contains<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null)
+        public IFilterBuilder Contains<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false)
         {
             var fieldName = ExtractFieldName(fieldSelector);
             return Contains(fieldName, value, caseInsensitive);
@@ -182,47 +179,34 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
             return this;
         }
 
+
         /// <summary>
         /// Builds the final filter operator structure.
         /// Returns the accumulated filters, wrapping in AndOperator if multiple.
         /// </summary>
         internal List<IOperator> BuildFilters()
         {
-            if (_filters.Count == 0)
+            switch (_filters.Count)
             {
-                return new List<IOperator>();
-            }
-
-            if (_filters.Count == 1)
-            {
-                return _filters;
-            }
-
-            // Multiple filters: wrap in implicit AND
-            return new List<IOperator> { new AndOperator { And = _filters } };
-        }
-
-        /// <summary>
-        /// Sets the CaseInsensitive property on an operator if it supports it.
-        /// Uses reflection to detect and set the property dynamically.
-        /// </summary>
-        private static void SetCaseInsensitiveIfSupported(FilterOperator op, bool? caseInsensitive)
-        {
-            if (!caseInsensitive.HasValue)
-            {
-                return;
-            }
-
-            var property = op.GetType().GetProperty("CaseInsensitive", BindingFlags.Public | BindingFlags.Instance);
-            if (property != null && property.PropertyType == typeof(bool) && property.CanWrite)
-            {
-                property.SetValue(op, caseInsensitive.Value);
+                case 0:
+                    return new List<IOperator>();
+                case 1:
+                    return _filters;
+                default:
+                    return new List<IOperator>
+                    {
+                        new AndOperator
+                        {
+                            And = _filters
+                        }
+                    };
             }
         }
 
         /// <summary>
-        /// Extracts the field name from a property selector expression and converts it to camelCase
-        /// to match the JSON serialization convention used by the Query API.
+        /// Extracts the field name from a property selector expression.
+        /// If the property has a JsonPropertyName attribute, that name is used (case preserved).
+        /// Otherwise, the property name is converted to camelCase to match the JSON serialization convention used by the Query API.
         /// </summary>
         private static string ExtractFieldName<T, TProp>(Expression<Func<T, TProp>> fieldSelector)
         {

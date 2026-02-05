@@ -25,12 +25,12 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         }
 
         // String-based methods (delegated to inner builder)
-        public IFilterBuilder Equals<TProp>(string field, TProp value, bool? caseInsensitive = null)
+        public IFilterBuilder Equals<TProp>(string field, TProp value, bool caseInsensitive = false)
         {
             return _innerBuilder.Equals(field, value, caseInsensitive);
         }
 
-        public IFilterBuilder NotEquals<TProp>(string field, TProp value, bool? caseInsensitive = null)
+        public IFilterBuilder NotEquals<TProp>(string field, TProp value, bool caseInsensitive = false)
         {
             return _innerBuilder.NotEquals(field, value, caseInsensitive);
         }
@@ -55,7 +55,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
             return _innerBuilder.LessThanOrEquals(field, value);
         }
 
-        public IFilterBuilder Contains<TProp>(string field, TProp value, bool? caseInsensitive = null)
+        public IFilterBuilder Contains<TProp>(string field, TProp value, bool caseInsensitive = false)
         {
             return _innerBuilder.Contains(field, value, caseInsensitive);
         }
@@ -86,12 +86,12 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         }
 
         // Generic typed methods from IFilterBuilder (explicit two-type-parameter versions)¨// TODO: MAYBE WE SHOULD JUST REMOVE THIS
-        IFilterBuilder IFilterBuilder.Equals<TEntity, TProp>(Expression<Func<TEntity, TProp>> fieldSelector, TProp value, bool? caseInsensitive)
+        IFilterBuilder IFilterBuilder.Equals<TEntity, TProp>(Expression<Func<TEntity, TProp>> fieldSelector, TProp value, bool caseInsensitive)
         {
             return _innerBuilder.Equals(fieldSelector, value, caseInsensitive);
         }
 
-        IFilterBuilder IFilterBuilder.NotEquals<TEntity, TProp>(Expression<Func<TEntity, TProp>> fieldSelector, TProp value, bool? caseInsensitive)
+        IFilterBuilder IFilterBuilder.NotEquals<TEntity, TProp>(Expression<Func<TEntity, TProp>> fieldSelector, TProp value, bool caseInsensitive)
         {
             return _innerBuilder.NotEquals(fieldSelector, value, caseInsensitive);
         }
@@ -116,7 +116,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
             return _innerBuilder.LessThanOrEquals(fieldSelector, value);
         }
 
-        IFilterBuilder IFilterBuilder.Contains<TEntity, TProp>(Expression<Func<TEntity, TProp>> fieldSelector, TProp value, bool? caseInsensitive)
+        IFilterBuilder IFilterBuilder.Contains<TEntity, TProp>(Expression<Func<TEntity, TProp>> fieldSelector, TProp value, bool caseInsensitive)
         {
             return _innerBuilder.Contains(fieldSelector, value, caseInsensitive);
         }
@@ -127,13 +127,13 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         }
 
         // Implicit entity type methods from IFilterBuilder<T>
-        public IFilterBuilder<T> Equals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null)
+        public IFilterBuilder<T> Equals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false)
         {
             _innerBuilder.Equals(fieldSelector, value, caseInsensitive);
             return this;
         }
 
-        public IFilterBuilder<T> NotEquals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null)
+        public IFilterBuilder<T> NotEquals<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false)
         {
             _innerBuilder.NotEquals(fieldSelector, value, caseInsensitive);
             return this;
@@ -163,7 +163,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
             return this;
         }
 
-        public IFilterBuilder<T> Contains<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null)
+        public IFilterBuilder<T> Contains<TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false)
         {
             _innerBuilder.Contains(fieldSelector, value, caseInsensitive);
             return this;

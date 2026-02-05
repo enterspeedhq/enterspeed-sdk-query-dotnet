@@ -1,5 +1,3 @@
-using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
-
 namespace Enterspeed.Query.Sdk.Tests.Domain.Services.Tests;
 
 using System;
@@ -16,7 +14,7 @@ using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Api.Providers;
 using Enterspeed.Query.Sdk.Api.Services;
 using Configuration;
-using Enterspeed.Query.Sdk.Domain.Builders;
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 using Enterspeed.Query.Sdk.Domain.Services;
@@ -42,6 +40,7 @@ public class EnterspeedQueryServiceMultiQueryTests
         public string OriginId { get; set; }
         public string SourceGuid { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public int Stock { get; set; }
     }
 
     private record User
@@ -73,8 +72,8 @@ public class EnterspeedQueryServiceMultiQueryTests
     {
         // Arrange - Build multi-query request
         var request = new MultiQueryBuilder()
-            .AddQuery("products", "product-index", builder => builder
-                .Where(f => f.GreaterThan("stock", "0"))
+            .AddQuery<Product>("products", "product-index", builder => builder
+                .Where(f => f.GreaterThan(x => x.Stock, 0))
                 .WithPagination(0, 10))
             .AddQuery("users", "user-index", builder => builder
                 .Where(f => f.Equals("status", "active"))
@@ -145,7 +144,8 @@ public class EnterspeedQueryServiceMultiQueryTests
                         id = "u-001",
                         name = "John Doe",
                         email = "john@example.com",
-                        status = "active"
+                        status = "active",
+                        stock = 1,
                     }
                 },
                 facets = Array.Empty<object>()
@@ -784,8 +784,6 @@ public class EnterspeedQueryServiceMultiQueryTests
         // Assert
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        // response.Message.Should().Contain("Index not found"); // TODO: Verify that we just do a generic Message and not many in the message object
-        // response.Message.Should().Contain("Permission denied");
 
         // All queries should fail
         var query1Response = response.Get<Product>("query1");

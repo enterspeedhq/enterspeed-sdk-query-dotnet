@@ -25,13 +25,6 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         IQueryBuilder WithPagination(Action<Pagination> configure);
 
         /// <summary>
-        /// Sets the pagination for the query using a Pagination Class.
-        /// </summary>
-        /// <param name="pagination">A pagination class.</param>
-        /// <returns>The query builder for method chaining.</returns>
-        IQueryBuilder WithPagination(Pagination pagination);
-
-        /// <summary>
         /// Adds a sort criterion to the query.
         /// </summary>
         /// <param name="field">The field to sort by.</param>

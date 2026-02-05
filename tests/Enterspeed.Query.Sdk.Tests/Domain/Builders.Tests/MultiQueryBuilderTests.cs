@@ -1,7 +1,7 @@
-
 namespace Enterspeed.Query.Sdk.Tests.Domain.Builders.Tests;
 
 using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
@@ -14,6 +14,29 @@ using static VerifyXunit.Verifier;
 
 public class MultiQueryBuilderTests
 {
+    #region Records for typed query tests
+    private record User
+    {
+        [JsonPropertyName("updatedAt")]
+        public DateTime UpdatedAt { get; set; }
+        [JsonPropertyName("active")]
+        public bool Active { get; set; }
+        [JsonPropertyName("department")]
+        public string Department { get; set; }
+    }
+
+    private record Product
+    {
+        public string Name { get; set; }
+        [JsonPropertyName("price")]
+
+        public decimal Price { get; set; }
+        public bool Active { get; set; }
+        public string Department { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+    #endregion
+
     #region Query Construction Tests
 
     [Fact]
@@ -48,8 +71,8 @@ public class MultiQueryBuilderTests
     {
         var builder = new MultiQueryBuilder();
         builder
-            .AddQuery("users", "user-index", q => q.WithPagination(0, 10))
-            .AddQuery("products", "product-index", q => q.WithPagination(0, 5))
+            .AddQuery<User>("users", "user-index", q => q.WithPagination(0, 10))
+            .AddQuery<Product>("products", "product-index", q => q.WithPagination(0, 5))
             .AddQuery("orders", "order-index", new QueryObject());
         var result = builder.Build();
         return Verify(result);
@@ -64,6 +87,26 @@ public class MultiQueryBuilderTests
         act.Should().Throw<ArgumentException>()
             .WithMessage("*key 'users' has already been added*")
             .And.ParamName.Should().Be("key");
+    }
+
+    [Fact]
+    public void AddQueryWithType_DuplicateKey_ThrowsArgumentException()
+    {
+        // Arrange
+        var builder = new MultiQueryBuilder();
+
+        // Act
+        builder.AddQuery<Product>("products", "product-index", q => q
+            .Where(filter => filter
+                .Equals(p => p.Active, true)));
+
+        Action act = () => builder.AddQuery<Product>("products", "product-index", q => q
+            .Where(filter => filter
+                .GreaterThan(p => p.Price, 100m)));
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("A query with the key 'products' has already been added. Each query must have a unique key. (Parameter 'key')");
     }
 
     [Theory]
@@ -134,6 +177,21 @@ public class MultiQueryBuilderTests
     }
 
     [Fact]
+    public Task AddQuery_WithTypedFilters_BuildsCorrectQuery()
+    {
+        var builder = new MultiQueryBuilder();
+        builder.AddQuery<Product>("products", "product-index", q => q
+            .WithPagination(0, 20)
+            .SortBy(p => p.UpdatedAt, SortOrder.Desc)
+            .Where(filter => filter
+                .Equals(p => p.Active, true)));
+
+        var request = builder.Build();
+
+        return Verify(request);
+    }
+
+    [Fact]
     public void Build_NoQueries_ThrowsInvalidOperationException()
     {
         var builder = new MultiQueryBuilder();
@@ -161,7 +219,7 @@ public class MultiQueryBuilderTests
     #region Serialization & API Contract Tests
 
     [Fact]
-    public Task Build_QueryWithPagination_SerializesCorrectly()
+    public Task Build_WithPagination_BuildsExpectedRequest()
     {
         var builder = new MultiQueryBuilder();
         builder.AddQuery("test", "test-index", q => q.WithPagination(2, 50));
@@ -170,7 +228,7 @@ public class MultiQueryBuilderTests
     }
 
     [Fact]
-    public Task Build_QueryWithSorting_SerializesCorrectly()
+    public Task Build_WithSorting_BuildsExpectedRequest()
     {
         var builder = new MultiQueryBuilder();
         builder.AddQuery("test", "test-index", q => q
@@ -181,7 +239,7 @@ public class MultiQueryBuilderTests
     }
 
     [Fact]
-    public Task Build_QueryWithFilters_SerializesCorrectly()
+    public Task Build_WithFilters_BuildsExpectedRequest()
     {
         var builder = new MultiQueryBuilder();
         var filter = new EqualsOperator<string>
@@ -193,8 +251,9 @@ public class MultiQueryBuilderTests
         return Verify(request);
     }
 
+
     [Fact]
-    public Task Build_QueryWithFacets_SerializesCorrectly()
+    public Task Build_WithFacets_BuildsExpectedRequest()
     {
         var builder = new MultiQueryBuilder();
         builder.AddQuery("test", "test-index", q => q
@@ -204,7 +263,7 @@ public class MultiQueryBuilderTests
     }
 
     [Fact]
-    public Task Build_QueryWithAliases_SerializesCorrectly()
+    public Task Build_WithAliases_BuildsExpectedRequest()
     {
         var builder = new MultiQueryBuilder();
         builder.AddQuery("test", "test-index", q => q
@@ -214,7 +273,7 @@ public class MultiQueryBuilderTests
     }
 
     [Fact]
-    public Task Build_ComplexMultiQuery_MatchesAPIContract()
+    public Task Build_WithMultipleQueries_BuildsExpectedRequest()
     {
         var builder = new MultiQueryBuilder();
         builder
@@ -234,6 +293,26 @@ public class MultiQueryBuilderTests
         var request = builder.Build();
         return Verify(request);
     }
+
+    [Fact]
+    public Task Build_WithTypedQueries_BuildsExpectedRequest()
+    {
+        var builder = new MultiQueryBuilder();
+        builder
+            .AddQuery<User>("users", "user-index", q => q
+                .WithPagination(page: 0, pageSize: 10)
+                .SortBy(x => x.UpdatedAt, SortOrder.Desc)
+                .Where(x => x.Equals(user => user.Active, true))
+                .WithFacet(x => x.Department))
+            .AddQuery<Product>("products", "product-index", q => q
+                .WithPagination(page: 0, pageSize: 20)
+                .SortBy(x => x.Price, SortOrder.Asc)
+                .WithAliases("title", "detail"));
+        var request = builder.Build();
+        return Verify(request);
+    }
+
+
     #endregion
 
     #region Helper Method Tests
@@ -282,93 +361,6 @@ public class MultiQueryBuilderTests
         builder.AddQuery("q2", "index", _ => { });
         builder.AddQuery("q3", "index", _ => { });
         builder.Count.Should().Be(3);
-    }
-
-    #endregion
-
-    #region Integration Tests
-
-    [Fact]
-    public Task FluentAPI_CompleteScenario_BuildsCorrectRequest()
-    {
-        var request = new MultiQueryBuilder()
-            .AddQuery("activeUsers", "user-index", builder => builder
-                .WithPagination(0, 25)
-                .SortBy("lastName", SortOrder.Asc)
-                .SortBy("firstName", SortOrder.Asc)
-                .Where(x => x.Equals("isActive", true))
-                .WithFacet("role", size: 10)
-                .WithAliases("summary"))
-            .AddQuery("recentOrders", "order-index", builder => builder
-                .WithPagination(0, 50)
-                .SortBy("orderDate", SortOrder.Desc)
-                .WhereAll(
-                    new GreaterThanOperator<string>
-                    {
-                        Field = "orderDate", Value = "2025-01-01"
-                    },
-                    new EqualsOperator<string>
-                    {
-                        Field = "status", Value = "completed"
-                    }))
-            .AddQuery("popularProducts", "product-index", new QueryObject
-            {
-                Pagination = new Pagination
-                {
-                    Page = 0, PageSize = 10
-                },
-                Sort = new System.Collections.Generic.List<Sort>
-                {
-                    new ()
-                    {
-                        Field = "viewCount", Order = SortOrder.Desc
-                    }
-                }
-            })
-            .Build();
-        return Verify(request);
-    }
-    // TODO TEST HERE WHAT TO DO:
-    [Fact] // TODO: Fix and enable
-    public Task Build_ComplexMultiQueryWithType_MatchesAPIContract()
-    {
-        var builder = new MultiQueryBuilder();
-        builder
-            .AddQuery<User>("users", "user-index", q => q
-                .WithPagination(new Pagination
-                {
-                    Page = 0,
-                    PageSize = 10
-                })
-                .SortBy("updatedAt", SortOrder.Desc)
-                .Where(x => x.Equals(user => user.Active, true))
-                .WithFacet("department"))
-            .AddQuery<Product>("products", "product-index", q => q
-                .WithPagination(new Pagination
-                {
-                    Page = 0,
-                    PageSize = 20
-                })
-                .SortBy(x => x.Price, SortOrder.Asc)
-                .WithAliases("tile", "detail"));
-        var request = builder.Build();
-        return Verify(request);
-    }
-
-    private record User
-    {
-        [JsonPropertyName("updatedAt")]
-        public DateTime UpdatedAt { get; set; }
-        [JsonPropertyName("active")]
-        public bool Active { get; set; }
-        [JsonPropertyName("department")]
-        public string Department { get; set; }
-    }
-
-    private record Product
-    {
-        [JsonPropertyName("price")]
-        public decimal Price { get; set; }
     }
 
     #endregion

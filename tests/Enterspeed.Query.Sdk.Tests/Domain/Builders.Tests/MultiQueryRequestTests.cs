@@ -1,10 +1,9 @@
-using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
 
 namespace Enterspeed.Query.Sdk.Tests.Domain.Builders.Tests;
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Enterspeed.Query.Sdk.Domain.Builders;
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
 using Enterspeed.Query.Sdk.Domain.Models;
 using FluentAssertions;
 using static VerifyXunit.Verifier;
@@ -56,8 +55,7 @@ public class MultiQueryRequestTests
         };
         var request = new MultiQueryRequest(queries);
         queries.Add(new MultiQueryObject { Name = "test2", Index = "index2" });
-        return Verify(request)
-            .UseMethodName("Queries_ChangingOriginalList_DoesNotAffectRequest_StillHasOne");
+        return Verify(request);
     }
 
     [Fact]

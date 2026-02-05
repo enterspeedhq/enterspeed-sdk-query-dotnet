@@ -1,0 +1,18 @@
+﻿{
+  Queries: [
+    {
+      Index: product-index,
+      Name: products,
+      Filters: {
+        And: [
+          {
+            Operator: equals,
+            Value: laptop,
+            CaseInsensitive: true,
+            Field: name
+          }
+        ]
+      }
+    }
+  ]
+}

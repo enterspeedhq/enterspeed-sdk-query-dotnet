@@ -11,7 +11,7 @@
   },
   Facets: [
     {
-      Name: ,
+      Name: category,
       Field: category,
       Size: 20
     }

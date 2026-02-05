@@ -19,7 +19,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// <param name="value">The value to compare against.</param>
         /// <param name="caseInsensitive">Optional. If true and operator supports it, performs case-insensitive comparison.</param>
         /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder Equals<TProp>(string field, TProp value, bool? caseInsensitive = null);
+        IFilterBuilder Equals<TProp>(string field, TProp value, bool caseInsensitive = false);
 
         /// <summary>
         /// Adds an equality filter using a strongly-typed property selector. Supports case-insensitive comparison for compatible operators.
@@ -30,7 +30,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// <param name="value">The value to compare against.</param>
         /// <param name="caseInsensitive">Optional. If true and operator supports it, performs case-insensitive comparison.</param>
         /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder Equals<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null);
+        IFilterBuilder Equals<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false);
 
         /// <summary>
         /// Adds a not-equals filter. Supports case-insensitive comparison for compatible operators.
@@ -40,7 +40,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// <param name="value">The value to compare against.</param>
         /// <param name="caseInsensitive">Optional. If true and operator supports it, performs case-insensitive comparison.</param>
         /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder NotEquals<TProp>(string field, TProp value, bool? caseInsensitive = null);
+        IFilterBuilder NotEquals<TProp>(string field, TProp value, bool caseInsensitive = false);
 
         /// <summary>
         /// Adds a not-equals filter using a strongly-typed property selector. Supports case-insensitive comparison for compatible operators.
@@ -51,7 +51,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// <param name="value">The value to compare against.</param>
         /// <param name="caseInsensitive">Optional. If true and operator supports it, performs case-insensitive comparison.</param>
         /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder NotEquals<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null);
+        IFilterBuilder NotEquals<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false);
 
         /// <summary>
         /// Adds a greater-than filter.
@@ -138,7 +138,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// <param name="value">The property to search for (supports wildcards).</param>
         /// <param name="caseInsensitive">Optional. If true and operator supports it, performs case-insensitive comparison.</param>
         /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder Contains<TProp>(string field, TProp value, bool? caseInsensitive = null);
+        IFilterBuilder Contains<TProp>(string field, TProp value, bool caseInsensitive = false);
 
         /// <summary>
         /// Adds a contains filter for string matching using a strongly-typed property selector. Supports case-insensitive comparison.
@@ -149,7 +149,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
         /// <param name="value">The value to search for (supports wildcards).</param>
         /// <param name="caseInsensitive">Optional. If true and operator supports it, performs case-insensitive comparison.</param>
         /// <returns>The filter builder for method chaining.</returns>
-        IFilterBuilder Contains<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool? caseInsensitive = null);
+        IFilterBuilder Contains<T, TProp>(Expression<Func<T, TProp>> fieldSelector, TProp value, bool caseInsensitive = false);
 
         /// <summary>
         /// Adds an IN filter (value must match one of the provided values).

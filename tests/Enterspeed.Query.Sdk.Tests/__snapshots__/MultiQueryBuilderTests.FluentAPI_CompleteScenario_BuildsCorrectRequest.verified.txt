@@ -31,7 +31,7 @@
       },
       Facets: [
         {
-          Name: ,
+          Name: role,
           Field: role,
           Size: 10
         }
