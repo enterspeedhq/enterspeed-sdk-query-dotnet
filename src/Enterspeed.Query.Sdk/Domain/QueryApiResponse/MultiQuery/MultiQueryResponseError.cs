@@ -1,4 +1,4 @@
-namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
+namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery
 {
     /// <summary>
     /// Internal model representing a failed query response from the multi-query API.

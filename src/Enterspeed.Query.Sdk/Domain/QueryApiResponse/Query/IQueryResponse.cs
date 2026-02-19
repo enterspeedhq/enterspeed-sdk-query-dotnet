@@ -1,4 +1,4 @@
-namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
+namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query
 {
     public interface IQueryResponse
     {

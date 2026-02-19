@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
+namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery
 {
     /// <summary>
     /// Extension methods for converting MultiQueryResponse list to dictionary indexed by query name

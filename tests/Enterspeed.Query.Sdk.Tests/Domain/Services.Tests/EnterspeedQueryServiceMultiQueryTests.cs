@@ -1,3 +1,5 @@
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
+
 namespace Enterspeed.Query.Sdk.Tests.Domain.Services.Tests;
 
 using System;

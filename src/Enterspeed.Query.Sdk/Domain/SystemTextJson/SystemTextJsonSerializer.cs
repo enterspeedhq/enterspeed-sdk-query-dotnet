@@ -12,7 +12,7 @@ namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
         private readonly JsonSerializerOptions _options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true // TODO Verify if we want this on or off
         };
 
         public SystemTextJsonSerializer(IList<JsonConverter> converters = null)

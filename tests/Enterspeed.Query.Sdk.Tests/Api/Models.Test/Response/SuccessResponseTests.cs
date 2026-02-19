@@ -1,3 +1,5 @@
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
+
 namespace Enterspeed.Query.Sdk.Tests.Api.Models.Test.Response;
 
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse;

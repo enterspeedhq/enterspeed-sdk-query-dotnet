@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 
 namespace Enterspeed.Query.Sdk.Api.Models.Response
 {

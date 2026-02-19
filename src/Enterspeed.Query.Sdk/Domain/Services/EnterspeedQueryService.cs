@@ -1,6 +1,5 @@
 ﻿using Enterspeed.Query.Sdk.Api.Providers;
 using Enterspeed.Query.Sdk.Api.Services;
-using Enterspeed.Query.Sdk.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,8 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
 
 namespace Enterspeed.Query.Sdk.Domain.Services
 {

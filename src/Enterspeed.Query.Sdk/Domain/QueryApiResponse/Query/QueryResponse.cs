@@ -1,7 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using Enterspeed.Query.Sdk.Api.Models.Response;
-
-namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
+﻿namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query
 {
     public abstract class QueryResponse : IQueryResponse
     {

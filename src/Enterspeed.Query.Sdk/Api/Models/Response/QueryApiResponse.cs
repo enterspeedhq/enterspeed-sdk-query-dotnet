@@ -3,6 +3,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;
 
 namespace Enterspeed.Query.Sdk.Api.Models.Response

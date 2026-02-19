@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Enterspeed.Query.Sdk.Api.Models;
 
-namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse
+namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query
 {
     // TODO: Rewrite this comment Use to convert into a success response from the Query API, however not for anything else
     public class QueryResponseSuccess : QueryResponse
