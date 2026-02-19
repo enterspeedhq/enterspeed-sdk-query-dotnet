@@ -96,7 +96,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
         /// </summary>
         /// <returns>An immutable MultiQueryRequest ready for execution.</returns>
         /// <exception cref="InvalidOperationException">Thrown when no queries have been added.</exception>
-        public MultiQueryRequest Build()
+        public QueryRequest Build()
         {
             if (_queries.Count == 0)
             {
@@ -106,14 +106,14 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
             if (_queries.Count == 1)
             {
                 var singleQuery = new List<MultiQueryObject>(_queries.Values)[0];
-                return new MultiQueryRequest(new List<MultiQueryObject>
+                return new QueryRequest(new List<MultiQueryObject>
                 {
                     singleQuery
                 });
             }
 
             var queryList = new List<MultiQueryObject>(_queries.Values);
-            return new MultiQueryRequest(queryList);
+            return new QueryRequest(queryList);
         }
 
         /// <summary>

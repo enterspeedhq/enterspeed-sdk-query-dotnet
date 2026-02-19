@@ -2,13 +2,13 @@
   Status: false,
   Errors: [
     {
-      Message: Query execution failed
-    },
-    {
-      Message: Invalid filter
-    },
-    {
-      Message: Timeout occurred
+      Index: books-index,
+      Name: books,
+      Message: Query execution failed,
+      Errors: [
+        Invalid filter,
+        Timeout occurred
+      ]
     }
   ]
 }

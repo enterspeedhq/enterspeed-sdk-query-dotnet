@@ -11,7 +11,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
         MultiQueryBuilder AddQuery<T>(string key, string index, Action<IQueryBuilder<T>> builderAction);
 
         MultiQueryBuilder AddQuery(string key, string index, QueryObject query);
-        MultiQueryRequest Build();
+        QueryRequest Build();
 
         bool ContainsKey(string key);
     }

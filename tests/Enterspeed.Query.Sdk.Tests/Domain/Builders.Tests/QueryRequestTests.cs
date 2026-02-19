@@ -9,7 +9,7 @@ using FluentAssertions;
 using static VerifyXunit.Verifier;
 using Xunit;
 
-public class MultiQueryRequestTests
+public class QueryRequestTests
 {
     [Fact]
     public Task Constructor_WithQueries_CreatesImmutableRequest()
@@ -25,7 +25,7 @@ public class MultiQueryRequestTests
                 Name = "test2", Index = "index2"
             }
         };
-        var request = new MultiQueryRequest(queries);
+        var request = new QueryRequest(queries);
         return Verify(request);
     }
 
@@ -39,7 +39,7 @@ public class MultiQueryRequestTests
                 Name = "test", Index = "index"
             }
         };
-        var request = new MultiQueryRequest(queries);
+        var request = new QueryRequest(queries);
         request.Queries.Should().BeAssignableTo<IReadOnlyList<MultiQueryObject>>();
     }
 
@@ -53,7 +53,7 @@ public class MultiQueryRequestTests
                 Name = "test1", Index = "index1"
             }
         };
-        var request = new MultiQueryRequest(queries);
+        var request = new QueryRequest(queries);
         queries.Add(new MultiQueryObject { Name = "test2", Index = "index2" });
         return Verify(request);
     }
@@ -76,7 +76,7 @@ public class MultiQueryRequestTests
                 Name = "third", Index = "index3"
             }
         };
-        var request = new MultiQueryRequest(queries);
+        var request = new QueryRequest(queries);
         return Verify(request);
     }
 }

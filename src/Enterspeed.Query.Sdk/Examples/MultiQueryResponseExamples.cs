@@ -54,7 +54,7 @@ namespace Enterspeed.Query.Sdk.Examples
 
             // 2. Execute the multi-query
             // The API returns: [{ index: "products-index", name: "products", totalResults: 200, results: [...], facets: [...] }, ...]
-            MultiQueryApiResponse response = await queryService.Query(apiKey, request.Queries.ToList(), CancellationToken.None);
+            MultiQueryApiResponse response = await queryService.Query(apiKey, request, CancellationToken.None);
 
             // 3. Check HTTP-level success
             if (response.StatusCode != System.Net.HttpStatusCode.OK)

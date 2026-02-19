@@ -1,0 +1,8 @@
+﻿{
+  Queries: [
+    {
+      Index: index1,
+      Name: test1
+    }
+  ]
+}

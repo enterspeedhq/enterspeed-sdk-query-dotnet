@@ -8,41 +8,6 @@ using Enterspeed.Query.Sdk.Domain.SystemTextJson;
 namespace Enterspeed.Query.Sdk.Api.Models.Response
 {
     /// <summary>
-    /// Response wrapper for single query API calls.
-    /// Wraps the API response with HTTP metadata.
-    /// </summary>
-    /// <typeparam name="T">The expected type of the query results.</typeparam>
-    public class QueryApiResponse<T>
-    {
-        public HttpStatusCode StatusCode { get; set; }
-        public HttpResponseHeaders Headers { get; set; }
-        public string Message { get; set; }
-
-        /// <summary>
-        /// The SDK response (ISuccess&lt;T&gt; or IFailure).
-        /// </summary>
-        /// <remarks>
-        /// Use pattern matching to inspect the result:
-        /// <code>
-        /// if (result.Response is ISuccess&lt;T&gt; success)
-        /// {
-        ///     // Handle success
-        /// }
-        /// else if (result.Response is IFailure failure)
-        /// {
-        ///     // Handle failure
-        /// }
-        /// </code>
-        /// </remarks>
-        public IResponse<T> Response { get; set; }
-
-        /// <summary>
-        /// Checks if the query was successful.
-        /// </summary>
-        public bool IsSuccess => Response is ISuccess<T>;
-    }
-
-    /// <summary>
     /// Response wrapper for multi-query API calls.
     /// Wraps the multi-query response list with HTTP metadata.
     /// </summary>
@@ -60,11 +25,6 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
         /// Use Get&lt;T&gt;(queryName) to retrieve and convert to typed results.
         /// </summary>
         internal Dictionary<string, MultiQueryResponse> Response { get; set; }
-
-        /// <summary>
-        /// Checks if all queries were successful.
-        /// </summary>
-        public bool IsSuccess => Response != null && Response.Values.All(r => r.Status == QueryStatus.Success);
 
         /// <summary>
         /// Retrieves a strongly-typed response for a specific query by name.

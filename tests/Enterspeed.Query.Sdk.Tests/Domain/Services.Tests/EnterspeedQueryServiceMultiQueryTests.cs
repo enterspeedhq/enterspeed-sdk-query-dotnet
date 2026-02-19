@@ -2,7 +2,6 @@ namespace Enterspeed.Query.Sdk.Tests.Domain.Services.Tests;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Mime;
@@ -167,7 +166,7 @@ public class EnterspeedQueryServiceMultiQueryTests
             });
 
         // Act
-        var response = await _queryService.Query(TestApiKey, request.Queries.ToList(), CancellationToken.None);
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
 
         // Assert - Check HTTP response
         response.Should().NotBeNull();
@@ -262,7 +261,7 @@ public class EnterspeedQueryServiceMultiQueryTests
             });
 
         // Act
-        var response = await _queryService.Query(TestApiKey, request.Queries.ToList(), CancellationToken.None);
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
 
         // Assert - Products should succeed
         var productsResponse = response.Get<Product>("products");
@@ -317,7 +316,7 @@ public class EnterspeedQueryServiceMultiQueryTests
             });
 
         // Act
-        var response = await _queryService.Query(TestApiKey, request.Queries.ToList(), CancellationToken.None);
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
 
         // Assert - Requesting non-existent key returns failure
         var missingResponse = response.Get<Product>("nonexistent");
@@ -373,7 +372,7 @@ public class EnterspeedQueryServiceMultiQueryTests
             });
 
         // Act
-        var response = await _queryService.Query(TestApiKey, request.Queries.ToList(), CancellationToken.None);
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
 
         // Assert - Correct type succeeds
         var correctTypeResponse = response.Get<Product>("products");
@@ -438,7 +437,7 @@ public class EnterspeedQueryServiceMultiQueryTests
             });
 
         // Act
-        var response = await _queryService.Query(TestApiKey, request.Queries.ToList(), CancellationToken.None);
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
         var firstCall = response.Get<Product>("products");
         var secondCall = response.Get<Product>("products");
 
@@ -523,7 +522,7 @@ public class EnterspeedQueryServiceMultiQueryTests
             });
 
         // Act
-        var response = await _queryService.Query(TestApiKey, request.Queries.ToList(), CancellationToken.None);
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
         var productsResponse = response.Get<Product>("products");
 
         // Assert
@@ -575,53 +574,62 @@ public class EnterspeedQueryServiceMultiQueryTests
     public async Task SingleQuery_WithValidRequest_ReturnsSuccess()
     {
         // Arrange - Test the single query API endpoint (not multi-query)
-        var mockResponse = new QueryResponseSuccess
+        const string name = "products";
+        const string index = "product-index";
+
+        var apiResponse = new List<object>
         {
-            TotalResults = 2,
-            Results = new List<Dictionary<string, object>>
+            new
             {
-                new ()
+                name = name,
+                index = index,
+                status = 0,
+                totalResults = 2,
+                results = new List<Dictionary<string, object>>
                 {
+                    new ()
                     {
-                        "sku", "p-001"
+                        {
+                            "sku", "p-001"
+                        },
+                        {
+                            "name", "Product 1"
+                        }
                     },
+                    new ()
                     {
-                        "name", "Product 1"
+                        {
+                            "sku", "p-002"
+                        },
+                        {
+                            "name", "Product 2"
+                        }
                     }
                 },
-                new ()
+                facets = new[]
                 {
+                    new
                     {
-                        "sku", "p-002"
-                    },
-                    {
-                        "name", "Product 2"
-                    }
-                }
-            },
-            Facets = new List<FacetResult>
-            {
-                new ()
-                {
-                    Name = "Categories",
-                    Field = "category",
-                    IsValid = true,
-                    Groups = new List<FacetGroup>
-                    {
-                        new ()
+                        name = "Categories",
+                        field = "category",
+                        isValid = true,
+                        groups = new[]
                         {
-                            Value = "Electronics", Count = 15
-                        },
-                        new ()
-                        {
-                            Value = "Books", Count = 8
+                            new
+                            {
+                                value = "Electronics", count = 15
+                            },
+                            new
+                            {
+                                value = "Books", count = 8
+                            }
                         }
                     }
                 }
             }
         };
 
-        var responseJson = _serializer.Serialize(mockResponse);
+        var responseJson = _serializer.Serialize(apiResponse);
 
         _mockHttpMessageHandler
             .Protected()
@@ -635,29 +643,24 @@ public class EnterspeedQueryServiceMultiQueryTests
                 Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
             });
 
-        var query = new QueryObject
-        {
-            Sort = new List<Sort>
-            {
-                new ()
-                {
-                    Field = "_updatedAt", Order = SortOrder.Desc
-                }
-            },
-            Pagination = new Pagination
-            {
-                Page = 0, PageSize = 10
-            }
-        };
+        var queryRequest = new MultiQueryBuilder()
+            .AddQuery(name, index, builder => builder
+                .SortBy("_updatedAt", SortOrder.Desc)
+                .WithPagination(0, 10))
+            .Build();
 
-        // Act - Call single query method
-        var result = await _queryService.Query(TestApiKey, "product-index", query, CancellationToken.None);
+        // Use Query Service to get a single query
+        var result = await _queryService.Query(TestApiKey, queryRequest, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        if (result.Response is QueryResponseSuccess successResponse)
+        result.GetQueryNames().Should().HaveCount(1);
+
+        var queryResult = result.Get<object>(name);
+
+        if (queryResult is ISuccess<object> successResponse)
         {
             successResponse.Should().NotBeNull();
             successResponse.TotalResults.Should().Be(2);
@@ -671,23 +674,22 @@ public class EnterspeedQueryServiceMultiQueryTests
     public async Task SingleQuery_WithInvalidRequest_ReturnsBadRequest()
     {
         // Arrange - Test error handling for single query API
-        var mockResponse = new Dictionary<string, object>
+        var apiResponse = new List<object>
         {
+            new
             {
-                "message", "Query is not valid"
-            },
-            {
-                "errors", new List<string>
+            name = "products",
+            index = "product-index",
+            status = 1,
+            message = "Query is not valid",
+            errors = new List<string>
                 {
                     "Field not found: invalidField"
                 }
             },
-            {
-                "status", 1
-            }
         };
 
-        var responseJson = _serializer.Serialize(mockResponse);
+        var responseJson = _serializer.Serialize(apiResponse);
 
         _mockHttpMessageHandler
             .Protected()
@@ -701,31 +703,26 @@ public class EnterspeedQueryServiceMultiQueryTests
                 Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
             });
 
-        var query = new QueryObject
-        {
-            Sort = new List<Sort>
-                {
-                    new ()
-                        {
-                            Field = "invalidField", Order = SortOrder.Desc
-                        }
-                },
-            Pagination = new Pagination
-            {
-                Page = 0, PageSize = 10
-            }
-        };
+        var queryRequest = new MultiQueryBuilder()
+            .AddQuery("products", "product-index", builder => builder
+                .SortBy("invalidField", SortOrder.Desc)  // Invalid sort field to trigger error
+                .WithPagination(0, 10))
+            .Build();
 
         // Act
-        var result = await _queryService.Query(TestApiKey, "product-index", query, CancellationToken.None);
+        var result = await _queryService.Query(TestApiKey, queryRequest, CancellationToken.None);
 
         // Assert - Single query API returns null Response on error, with Message populated
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         result.Message.Should().Be("Query is not valid");
-        if (result.Response is IError<string> failure)
+        var resultError = result.Get<object>("products");
+
+        resultError.Should().NotBeAssignableTo<QueryError>();
+
+        if (resultError is IError failure)
         {
-            failure.Errors.Should().Contain(e => e.Message.Contains("Field not found: invalidField"));
+            failure.Errors.Should().Contain(e => e.Message.Contains("Query is not valid"));
         }
     }
 
@@ -779,7 +776,7 @@ public class EnterspeedQueryServiceMultiQueryTests
             .Build();
 
         // Act
-        var response = await _queryService.Query(TestApiKey, request.Queries.ToList(), CancellationToken.None);
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
 
         // Assert
         response.Should().NotBeNull();

@@ -6,7 +6,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
     /// Represents a failed response for SDK consumers.
     /// </summary>
     /// <typeparam name="T">The expected type (not used, as this is a failure).</typeparam>
-    public class ErrorResponse<T> : IError<T>
+    public class ErrorResponse<T> : IError<T>, IError
     {
         private readonly List<QueryError> _errors;
 

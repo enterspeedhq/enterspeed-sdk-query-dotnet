@@ -2,8 +2,7 @@
   Status: false,
   Errors: [
     {
-      Message: Response list is not initialized,
-      Code: NO_RESPONSE
+      Message: Response dictionary is not initialized
     }
   ]
 }

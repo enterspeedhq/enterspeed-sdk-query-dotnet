@@ -685,7 +685,7 @@ public class MultiQueryApiResponseTests
         var queryService = new EnterspeedQueryService(httpClient, configProvider, serializer);
 
         // Execute the query
-        var response = await queryService.Query("test-api-key", request.Queries.ToList(), CancellationToken.None);
+        var response = await queryService.Query("test-api-key", request, CancellationToken.None);
 
         // STEP 3: Validate the API response structure
         response.Should().NotBeNull();
@@ -809,7 +809,7 @@ public class MultiQueryApiResponseTests
         var queryService = new EnterspeedQueryService(httpClient, configProvider, serializer);
 
         // Execute
-        var response = await queryService.Query("test-api-key", request.Queries.ToList(), CancellationToken.None);
+        var response = await queryService.Query("test-api-key", request, CancellationToken.None);
 
         // STEP 3: Validate independent results
         response.Should().NotBeNull();

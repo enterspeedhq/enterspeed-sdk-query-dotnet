@@ -1,8 +1,0 @@
-﻿{
-  Status: false,
-  Errors: [
-    {
-      Message: Query 'nonexistent' not found in response
-    }
-  ]
-}

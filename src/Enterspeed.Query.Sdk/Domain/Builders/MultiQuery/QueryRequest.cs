@@ -8,7 +8,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
     /// Immutable container for a multi-query request.
     /// Contains all queries to be executed in a single API call.
     /// </summary>
-    public class MultiQueryRequest
+    public class QueryRequest
     {
         /// <summary>
         /// Gets the read-only list of query items.
@@ -19,7 +19,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
         /// Initializes a new instance of the MultiQueryRequest class.
         /// </summary>
         /// <param name="queries">The collection of queries to include in this request.</param>
-        internal MultiQueryRequest(IList<MultiQueryObject> queries)
+        internal QueryRequest(IList<MultiQueryObject> queries)
         {
             // Defensive copy to avoid external mutations affecting this request
             var snapshot = new List<MultiQueryObject>(queries);
