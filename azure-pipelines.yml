@@ -87,7 +87,8 @@ stages:
             displayName: Dotnet test
             inputs:
               command: test
-              arguments: '--no-build --configuration Release --collect:"XPlat Code Coverage"'
+              projects: "**/*Tests.csproj"
+              arguments: '--no-build --configuration Release'
 
           # Pack NuGet
           - task: DotNetCoreCLI@2
