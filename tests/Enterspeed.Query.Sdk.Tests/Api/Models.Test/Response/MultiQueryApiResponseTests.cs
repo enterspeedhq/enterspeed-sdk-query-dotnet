@@ -1,5 +1,4 @@
-using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
+
 
 namespace Enterspeed.Query.Sdk.Tests.Api.Models.Test.Response;
 using System;
@@ -15,10 +14,10 @@ using Enterspeed.Query.Sdk.Api.Models;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Api.Providers;
 using Configuration;
-using Enterspeed.Query.Sdk.Domain.Builders;
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 using Enterspeed.Query.Sdk.Domain.Services;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
