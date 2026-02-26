@@ -8,81 +8,8 @@ using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
 {
     /// <summary>
-    /// Custom converter for polymorphic QueryResponse that handles discriminator
-    /// property appearing in any position (not just first)
-    /// </summary>
-    public class QueryResponseConverter : JsonConverter<QueryResponse>
-    {
-        private const string DiscriminatorPropertyName = "status";
-
-        public override QueryResponse Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            using (var jsonDoc = JsonDocument.ParseValue(ref reader))
-            {
-                var root = jsonDoc.RootElement;
-
-                // Extract discriminator value from anywhere in the JSON
-                if (!root.TryGetProperty(DiscriminatorPropertyName, out var discriminatorElement))
-                {
-                    throw new JsonException($"Missing required discriminator property '{DiscriminatorPropertyName}'");
-                }
-
-                // Get the numeric or string discriminator value
-                var discriminatorValue = GetDiscriminatorValue(discriminatorElement);
-
-                // Determine which concrete type to deserialize into
-                Type targetType;
-                switch (discriminatorValue)
-                {
-                    case 0:
-                    case (long)0:
-                        targetType = typeof(QueryResponseSuccess);
-                        break;
-                    case 1:
-                    case (long)1:
-                        targetType = typeof(QueryResponseError);
-                        break;
-                    default:
-                        throw new JsonException($"Unknown discriminator value: {discriminatorValue}");
-                }
-
-                // Deserialize using the concrete type
-                var concreteResponse = JsonSerializer.Deserialize(
-                    root.GetRawText(),
-                    targetType,
-                    options);
-
-                return (QueryResponse)concreteResponse;
-            }
-        }
-
-        public override void Write(Utf8JsonWriter writer, QueryResponse value, JsonSerializerOptions options)
-        {
-            // Ensure discriminator is written first
-            JsonSerializer.Serialize<object>(writer, value, options);
-        }
-
-        private static object GetDiscriminatorValue(JsonElement element)
-        {
-            switch (element.ValueKind)
-            {
-                case JsonValueKind.Number:
-                    return element.TryGetInt32(out var intValue) ? intValue : element.GetInt64();
-                case JsonValueKind.String:
-                    return element.GetString();
-                case JsonValueKind.True:
-                    return true;
-                case JsonValueKind.False:
-                    return false;
-                default:
-                    throw new JsonException($"Unexpected discriminator type: {element.ValueKind}");
-            }
-        }
-    }
-
-    /// <summary>
     /// Generic custom converter for polymorphic QueryResponse&lt;T&gt; that handles discriminator
-    /// property appearing in any position (not just first)
+    /// property appearing in any position
     /// </summary>
     public class QueryResponseConverter<T> : JsonConverter<QueryResponse<T>>
     {
@@ -209,7 +136,7 @@ namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
     }
 
     /// <summary>
-    /// Custom converter for polymorphic MultiQueryResponse (same pattern)
+    /// Custom converter for polymorphic MultiQueryResponse
     /// </summary>
     public class MultiQueryResponseConverter : JsonConverter<MultiQueryResponse>
     {
