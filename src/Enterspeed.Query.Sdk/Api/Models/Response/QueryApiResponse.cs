@@ -32,14 +32,14 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
         /// Retrieves a strongly-typed response for a specific query by name.
         /// Converts the raw API response to IResponse&lt;T&gt; on-demand.
         /// </summary>
-        public IResponse<T> Get<T>(string queryName) // TODO: Map the errors from the QueryResponseError to QueryError
+        public IResponse<T> Get<T>(string queryName)
         {
             if (string.IsNullOrWhiteSpace(queryName))
             {
                 return new ErrorResponse<T>(new QueryError { Message = "Query name cannot be null or empty", } );
             }
 
-            if (Response is null) // TODO: Should this not be part of constructor validation? And implement constructor?
+            if (Response is null)
             {
                 return new ErrorResponse<T>(new QueryError { Message = "Response dictionary is not initialized" });
             }
@@ -97,7 +97,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
                     _cachedResponses[cacheKey] = typedSuccess;
                     return typedSuccess;
                 }
-                catch (System.Exception ex) // TODO Check if this key is attached to a specific type or we can try with another type? YES!
+                catch (System.Exception ex)
                 {
                     var failure = new ErrorResponse<T>(new QueryError
                     {

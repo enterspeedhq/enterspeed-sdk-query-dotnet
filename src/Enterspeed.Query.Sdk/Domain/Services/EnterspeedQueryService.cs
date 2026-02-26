@@ -35,11 +35,8 @@ namespace Enterspeed.Query.Sdk.Domain.Services
 
             var requestUri = RequestUri();
 
-            // TODO: Should we have a Build in here if they forget to call it?
             var httpContent = new StringContent(_serializer.Serialize(queries.Queries), Encoding.UTF8, "application/json");
 
-            Console.WriteLine("Serialized multi-query request content:"); // TODO REMOVE!
-            Console.WriteLine(await httpContent.ReadAsStringAsync());
             return await QueryApiResponseMultiple(apiKey, requestUri, httpContent, cancellationToken);
         }
 

@@ -3,16 +3,12 @@ using Enterspeed.Query.Sdk.Api.Models;
 
 namespace Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query
 {
-    // TODO: Rewrite this comment Use to convert into a success response from the Query API, however not for anything else
-    public class QueryResponseSuccess : QueryResponse
-    {
-        public int TotalResults { get; set; }
-        public List<Dictionary<string, object>> Results { get; set; } = new List<Dictionary<string, object>>();
-        public List<FacetResult> Facets { get; set; } = new List<FacetResult>();
-        public override QueryStatus Status => QueryStatus.Success;
-    }
-
-    // TODO: Rewrite this comment Used to get each typed result from the Query API
+    /// <summary>
+    /// Represents a successful response from the Enterspeed Query API containing typed results.
+    /// This class encapsulates the query results, total count, and facet information returned
+    /// when a query operation completes successfully.
+    /// </summary>
+    /// <typeparam name="T">The type of objects returned in the Results collection</typeparam>
     public class QueryResponseSuccess<T> : QueryResponse<T>
     {
         public int TotalResults { get; set; }

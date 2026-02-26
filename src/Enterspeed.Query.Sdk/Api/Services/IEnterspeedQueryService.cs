@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
-using Enterspeed.Query.Sdk.Api.Models;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
-using Enterspeed.Query.Sdk.Domain.Models;
 
 namespace Enterspeed.Query.Sdk.Api.Services
 {

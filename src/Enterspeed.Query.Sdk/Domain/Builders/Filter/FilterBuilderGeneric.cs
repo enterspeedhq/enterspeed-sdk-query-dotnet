@@ -85,7 +85,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Filter
             return _innerBuilder.And(configure);
         }
 
-        // Generic typed methods from IFilterBuilder (explicit two-type-parameter versions)¨// TODO: MAYBE WE SHOULD JUST REMOVE THIS
+        // Generic typed methods from IFilterBuilder (explicit two-type-parameter versions)
         IFilterBuilder IFilterBuilder.Equals<TEntity, TProp>(Expression<Func<TEntity, TProp>> fieldSelector, TProp value, bool caseInsensitive)
         {
             return _innerBuilder.Equals(fieldSelector, value, caseInsensitive);
