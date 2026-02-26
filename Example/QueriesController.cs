@@ -11,30 +11,32 @@ public class QueriesController : Controller
 {
     private readonly IEnterspeedQueryService _enterspeedQueryService;
     private readonly ILogger<QueriesController> _logger;
+    private readonly IJsonSerializer _jsonSerializer;
+    private const string _apiKey = "";
     public QueriesController(
         IEnterspeedQueryService enterspeedQueryService,
-        ILogger<QueriesController> logger)
+        ILogger<QueriesController> logger,
+        IJsonSerializer jsonSerializer)
     {
         _logger = logger;
         _enterspeedQueryService = enterspeedQueryService;
+        _jsonSerializer = jsonSerializer;
     }
 
     [HttpGet("api/queries/single")]
     public async Task<IActionResult> GetQueryAsync()
     {
-        var apiKey = "";
-
         var request = new MultiQueryBuilder()
             .AddQuery<Movie>("recent-high-budget-key", "movies", builder => builder
                 .Where(f => f
-                    .GreaterThanOrEquals(x => x.ReleaseDate, "2025-09-19")
+                    .GreaterThanOrEquals(x => x.ReleaseDate, DateTimeOffset.Parse("2025-09-19"))
                     .GreaterThan(x => x.Budget, 100000000))
                 .SortBy(x => x.Popularity, SortOrder.Desc)
                 .WithFacet(x => x.Genres)
                 .WithPagination(0, 10))
             .Build();
 
-        var response = await _enterspeedQueryService.Query(apiKey, request, CancellationToken.None);
+        var response = await _enterspeedQueryService.Query(_apiKey, request, CancellationToken.None);
 
         if (response.StatusCode != System.Net.HttpStatusCode.OK)
         {
@@ -55,14 +57,12 @@ public class QueriesController : Controller
     [HttpGet("api/queries/multi")]
     public async Task<IActionResult> GetQueriesAsync()
     {
-        var apiKey = "";
-
         // Show how to build a multi-query request with 5 different queries using the MultiQueryBuilder
         var request = new MultiQueryBuilder()
             // 1. Recent High-Budget Movies
             .AddQuery<Movie>( "recent-high-budget-key", "movies", builder => builder
                 .Where(f => f
-                    .GreaterThanOrEquals(x => x.ReleaseDate, "2025-09-19")
+                    .GreaterThanOrEquals(x => x.ReleaseDate, DateTimeOffset.Parse("2025-09-19"))
                     .GreaterThan(x => x.Budget, 100000000))
                 .SortBy(x => x.Popularity, SortOrder.Desc)
                 .WithFacet(x => x.Genres)
@@ -94,8 +94,8 @@ public class QueriesController : Controller
             // 5. Movies Released in a Date Range
             .AddQuery<Movie>( "movies-in-date-range-key", "movies", builder => builder
                 .Where(f => f
-                    .GreaterThanOrEquals(x => x.ReleaseDate, "2010-01-01")
-                    .LessThanOrEquals("releaseDate", "2026-12-31"))
+                    .GreaterThanOrEquals(x => x.ReleaseDate, DateTimeOffset.Parse("2010-01-01"))
+                    .LessThanOrEquals(x => x.ReleaseDate, DateTimeOffset.Parse("2026-12-31")))
                 .SortBy(x => x.Revenue, SortOrder.Desc)
                 .WithFacet("genres")
                 .WithPagination(0, 12))
@@ -103,9 +103,8 @@ public class QueriesController : Controller
 
         // Execute the multi-query request and get the response
         // Here we will only get some good request to show how we can handle the response both for errors and success
-        var response = await _enterspeedQueryService.Query(apiKey, request, CancellationToken.None);
+        var response = await _enterspeedQueryService.Query(_apiKey, request, CancellationToken.None);
 
-        //
         if (response.StatusCode != System.Net.HttpStatusCode.OK)
         {
             Console.WriteLine($"Multi-query request failed with status code: {response.StatusCode}");
@@ -136,34 +135,15 @@ public class QueriesController : Controller
             }
         }
 
-        // var result = new
-        // {
-        //     RecentHighBudget = recentHighBudget is ISuccess<MovieResponse>,
-        //     TopRatedNonAdult = topRatedNonAdult is ISuccess<MovieResponse>,
-        //     LongEnglishMovies = longEnglishMovies is ISuccess<MovieResponse>,
-        //     PopularActionMovies = popularActionMovies is ISuccess<MovieResponse>,
-        //     MoviesInDateRange = moviesInDateRange is ISuccess<MovieResponse>
-        // };
-
-        if (recentHighBudget is ISuccess<MovieResponse>)
+        if (recentHighBudget is ISuccess<MovieResponse> recentHighBudgetSuccess)
         {
             // Do some logic with the movies that works
-
+            //if (recentHighBudgetSuccess.Results.)
         }
-
-
-
-
-
-
-
-
 
         // For demonstration we want to return the movies that works and not works
 
-
-
-
-        return Ok(recentHighBudget);
+        // Relay the response where derived types are used. Same response as the Query API
+        return Ok(response.Response);
     }
 }

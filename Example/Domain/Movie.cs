@@ -28,7 +28,7 @@ public record Movie
     public string[] ProductionCountries { get; set; }
 
     [JsonPropertyName("release_date")]
-    public string ReleaseDate { get; set; } // TODO Consider how we handle datas format since we accept text in Query API
+    public DateTimeOffset ReleaseDate { get; set; }
     public int Revenue { get; set; }
     public int Runtime { get; set; }
 

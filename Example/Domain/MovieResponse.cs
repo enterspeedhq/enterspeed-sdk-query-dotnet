@@ -47,13 +47,13 @@ public class MovieResponse
     public string[] ProductionCompanies { get; set; }
 
     [JsonPropertyName("revenue")]
-    public int Revenue { get; set; }
+    public long Revenue { get; set; }
 
     [JsonPropertyName("adult")]
     public bool Adult { get; set; }
 
     [JsonPropertyName("budget")]
-    public int Budget { get; set; }
+    public long Budget { get; set; }
 
     [JsonPropertyName("runtime")]
     public int Runtime { get; set; }
