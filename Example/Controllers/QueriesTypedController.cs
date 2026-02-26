@@ -5,25 +5,22 @@ using Enterspeed.Query.Sdk.Domain.Models;
 using Example.Domain;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Example;
+namespace Example.Controllers;
 
-public class QueriesController : Controller
+public class QueriesTypedController : Controller
 {
     private readonly IEnterspeedQueryService _enterspeedQueryService;
-    private readonly ILogger<QueriesController> _logger;
-    private readonly IJsonSerializer _jsonSerializer;
-    private const string _apiKey = "";
-    public QueriesController(
+    private readonly ILogger<QueriesTypedController> _logger;
+    private const string ApiKey = "";
+    public QueriesTypedController(
         IEnterspeedQueryService enterspeedQueryService,
-        ILogger<QueriesController> logger,
-        IJsonSerializer jsonSerializer)
+        ILogger<QueriesTypedController> logger)
     {
         _logger = logger;
         _enterspeedQueryService = enterspeedQueryService;
-        _jsonSerializer = jsonSerializer;
     }
 
-    [HttpGet("api/queries/single")]
+    [HttpGet("api/fluent/typed/single")]
     public async Task<IActionResult> GetQueryAsync()
     {
         var request = new MultiQueryBuilder()
@@ -36,7 +33,7 @@ public class QueriesController : Controller
                 .WithPagination(0, 10))
             .Build();
 
-        var response = await _enterspeedQueryService.Query(_apiKey, request, CancellationToken.None);
+        var response = await _enterspeedQueryService.Query(ApiKey, request, CancellationToken.None);
 
         if (response.StatusCode != System.Net.HttpStatusCode.OK)
         {
@@ -54,45 +51,34 @@ public class QueriesController : Controller
         };
     }
 
-    [HttpGet("api/queries/multi")]
+    [HttpGet("api/fluent/typed/multi")]
     public async Task<IActionResult> GetQueriesAsync()
     {
         // Show how to build a multi-query request with 5 different queries using the MultiQueryBuilder
         var request = new MultiQueryBuilder()
-            // 1. Recent High-Budget Movies
-            .AddQuery<Movie>( "recent-high-budget-key", "movies", builder => builder
+            .AddQuery<Movie>("recent-high-budget-key", "movies", builder => builder
                 .Where(f => f
                     .GreaterThanOrEquals(x => x.ReleaseDate, DateTimeOffset.Parse("2025-09-19"))
                     .GreaterThan(x => x.Budget, 100000000))
                 .SortBy(x => x.Popularity, SortOrder.Desc)
                 .WithFacet(x => x.Genres)
                 .WithPagination(0, 10))
-            // 2. Top Rated Non-Adult Movies
             .AddQuery<Movie>("top-rated-non-adult-key", "movies", builder => builder
                 .Where(f => f
                     .Equals(x => x.Adult, false)
                     .GreaterThan(x => x.VoteAverage, 8))
                 .SortBy(x => x.VoteCount, SortOrder.Desc)
-                .WithFacet(x => x.ProductionCompanies) // Is a string list field on the Query API
+                .WithFacet(x => x.ProductionCompanies)
                 .WithPagination(0, 5))
-            // 3. Movies by Language and Runtime
-            .AddQuery<Movie>("long-english-movies-key", "movies", builder => builder
-                .Where(f => f
-                    .Equals(x => x.OriginalLanguage, "en")
-                    .GreaterThan(x => x.Runtime, 120))
-                .SortBy(x => x.ReleaseDate, SortOrder.Asc)
-                .WithFacet("productionCountries")
+            .AddQuery<MovieCredits>("movie-credits", "movieCredits", builder => builder
                 .WithPagination(0, 15))
-            // 4. Popular Movies with Specific Genre
-            .AddQuery<Movie>("popular-action-movies-key", "movies", builder => builder
+            .AddQuery<Persons>("persons", "persons", builder => builder
                 .Where(f => f
-                    .Contains(x => x.Genres, new string[] {"Action"})
-                    .GreaterThan(x => x.Popularity, 50))
-                .SortBy(x => x.VoteAverage, SortOrder.Desc)
-                .WithFacet("spokenLanguages")
+                    .Equals(x => x.Gender, "Female")
+                    .GreaterThan(x => x.BirthDate, new DateTime(1980, 1, 1)))
+                .SortBy(x => x.Name, SortOrder.Desc)
                 .WithPagination(0, 8))
-            // 5. Movies Released in a Date Range
-            .AddQuery<Movie>( "movies-in-date-range-key", "movies", builder => builder
+            .AddQuery<Movie>("movies-in-date-range-key", "movies", builder => builder
                 .Where(f => f
                     .GreaterThanOrEquals(x => x.ReleaseDate, DateTimeOffset.Parse("2010-01-01"))
                     .LessThanOrEquals(x => x.ReleaseDate, DateTimeOffset.Parse("2026-12-31")))
@@ -103,19 +89,19 @@ public class QueriesController : Controller
 
         // Execute the multi-query request and get the response
         // Here we will only get some good request to show how we can handle the response both for errors and success
-        var response = await _enterspeedQueryService.Query(_apiKey, request, CancellationToken.None);
+        var response = await _enterspeedQueryService.Query(ApiKey, request, CancellationToken.None);
 
         if (response.StatusCode != System.Net.HttpStatusCode.OK)
         {
             Console.WriteLine($"Multi-query request failed with status code: {response.StatusCode}");
-            return StatusCode((int)response.StatusCode, "Failed to execute multi-query");
+            return StatusCode((int)response.StatusCode, response.Message);
         }
 
         // Collect results for all queries
-        var recentHighBudget = response.Get<MovieResponse>("recent-high-budget-key"); // There is already a Success<MovieResponse> or Failure<MovieResponse> in the response and we can handle them separately
-        var topRatedNonAdult = response.Get<MovieResponse>("top-rated-non-adult-key"); // This is a IErrror<MovieResponse> since we have a failure for this query in the API response and we can handle it separately
-        var longEnglishMovies = response.Get<MovieResponse>("long-english-movies-key");
-        var popularActionMovies = response.Get<MovieResponse>("popular-action-movies-key");
+        var recentHighBudget = response.Get<MovieResponse>("recent-high-budget-key");
+        var topRatedNonAdult = response.Get<MovieResponse>("top-rated-non-adult-key");
+        var movieCredits = response.Get<MovieCredits>("movie-credits");
+        var persons = response.Get<Persons>("persons");
         var moviesInDateRange = response.Get<MovieResponse>("movies-in-date-range-key");
 
         if (recentHighBudget is IError recentHighBudgetError)
@@ -135,13 +121,49 @@ public class QueriesController : Controller
             }
         }
 
-        if (recentHighBudget is ISuccess<MovieResponse> recentHighBudgetSuccess)
+        if (topRatedNonAdult is ISuccess<MovieResponse> topRatedNonAdultSuccess)
         {
-            // Do some logic with the movies that works
-            //if (recentHighBudgetSuccess.Results.)
-        }
+            var inception = topRatedNonAdultSuccess.Results.FirstOrDefault(x => x.OriginalTitle == "Inception");
 
-        // For demonstration we want to return the movies that works and not works
+            if (inception != null)
+            {
+                _logger.LogInformation($"Inception found with vote average: {inception.VoteAverage}");
+            }
+
+            var englishMoviesOfTopRatedNonAdult = topRatedNonAdultSuccess.Results.Where(x => x.OriginalLanguage == "en").ToList();
+            _logger.LogInformation("English movies of top-rated non-adult movies:");
+            englishMoviesOfTopRatedNonAdult.ForEach(movie => _logger.LogInformation("English movie: {MovieOriginalTitle} with vote average: {MovieVoteAverage}", movie.OriginalTitle, movie.VoteAverage));
+
+            // Handle MovieCredits
+            if (movieCredits is ISuccess<MovieCredits> movieCreditsSuccess)
+            {
+                foreach (var credits in movieCreditsSuccess.Results)
+                {
+                    _logger.LogInformation($"MovieCredits found. MovieId: {credits.MovieId}");
+                    var castType = credits.Cast.GetType().Name;
+                    _logger.LogInformation($"Cast type: {castType}");
+                    if (credits.Cast is IEnumerable<object> castList)
+                    {
+                        _logger.LogInformation($"Cast count: {castList.Count()}");
+                    }
+
+                }
+            }
+
+            // Handle Persons
+            if (persons is ISuccess<Persons> personsSuccess)
+            {
+
+                foreach (var person in personsSuccess.Results)
+                {
+                    _logger.LogInformation($"Person found: {person.Name}, BirthDate: {person.BirthDate:yyyy-MM-dd}, Gender: {person.Gender}");
+                    if (person.AlsoKnownAs.Length > 0)
+                    {
+                        _logger.LogInformation($"Also known as: {string.Join(", ", person.AlsoKnownAs)}");
+                    }
+                }
+            }
+        }
 
         // Relay the response where derived types are used. Same response as the Query API
         return Ok(response.Response);
