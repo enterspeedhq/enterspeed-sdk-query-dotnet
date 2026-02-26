@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
+using Enterspeed.Query.Sdk.Api.Services;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;
@@ -103,7 +103,9 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
                     {
                         Message = $"Failed to convert query '{queryName}' to type {typeof(T).Name}: {ex.Message}"
                     });
-                    _cachedResponses[cacheKey] = failure;
+                    // Do not cache the failure to avoid no being able to query the right and type after usage the first time with the wrong type.
+                    // We can consider caching the failure with the specific type to avoid trying to convert to the same wrong type again,
+                    // but we should still be able to try with another type after a failure with a specific type.
                     return failure;
                 }
             }
