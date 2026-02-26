@@ -14,7 +14,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
     /// Concrete implementation of IQueryBuilder for building individual queries.
     /// Accumulates configuration and produces a QueryObject when Build() is called.
     /// </summary>
-    internal class QueryBuilder : IQueryBuilder
+    internal class Query : IQuery
     {
         private Pagination _pagination;
         private readonly List<Sort> _sorts = new List<Sort>();
@@ -22,7 +22,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         private readonly List<Facet> _facets = new List<Facet>();
         private readonly List<string> _aliases = new List<string>();
 
-        public IQueryBuilder WithPagination(int page, int pageSize)
+        public IQuery WithPagination(int page, int pageSize)
         {
             if (page < 0)
             {
@@ -38,7 +38,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
-        public IQueryBuilder WithPagination(Action<Pagination> configure)
+        public IQuery WithPagination(Action<Pagination> configure)
         {
             var pagination = new Pagination();
             configure(pagination);
@@ -46,7 +46,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
-        public IQueryBuilder SortBy(string field, SortOrder order = SortOrder.Asc)
+        public IQuery SortBy(string field, SortOrder order = SortOrder.Asc)
         {
             if (string.IsNullOrWhiteSpace(field))
             {
@@ -57,7 +57,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
-        public IQueryBuilder SortBy<T>(Expression<Func<T, object>> fieldSelector, SortOrder order = SortOrder.Asc)
+        public IQuery SortBy<T>(Expression<Func<T, object>> fieldSelector, SortOrder order = SortOrder.Asc)
         {
             var fieldName = GetFieldName(fieldSelector);
 
@@ -70,7 +70,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         }
 
 
-        public IQueryBuilder Where(Action<IFilterBuilder> configure)
+        public IQuery Where(Action<IFilterBuilder> configure)
         {
             if (configure == null)
             {
@@ -90,7 +90,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         }
 
 
-        public IQueryBuilder Where(IOperator filter)
+        public IQuery Where(IOperator filter)
         {
             if (filter == null)
             {
@@ -101,7 +101,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
-        public IQueryBuilder WhereAll(params IOperator[] filters)
+        public IQuery WhereAll(params IOperator[] filters)
         {
             if (filters == null)
             {
@@ -123,7 +123,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
-        public IQueryBuilder WithFacet(string field, string name = null, int size = 10)
+        public IQuery WithFacet(string field, string name = null, int size = 10)
         {
             if (string.IsNullOrWhiteSpace(field))
             {
@@ -145,7 +145,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
-        public IQueryBuilder WithAliases(params string[] aliases)
+        public IQuery WithAliases(params string[] aliases)
         {
             if (aliases == null)
             {

@@ -28,8 +28,7 @@ namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
                 // Default converters when none provided
                 _options.Converters.Add(new FilterConverter());
                 _options.Converters.Add(new SortOrderJsonConverter());
-                _options.Converters.Add(new QueryResponseConverterFactory()); // For polymorphic QueryResponse<T>
-                _options.Converters.Add(new MultiQueryResponseConverter()); // For polymorphic MultiQueryResponse
+                _options.Converters.Add(new QueryResponseConverter());
             }
         }
 

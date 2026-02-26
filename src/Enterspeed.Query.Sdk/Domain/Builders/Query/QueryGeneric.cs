@@ -12,105 +12,105 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
     /// Wraps the non-generic QueryBuilder and provides strongly-typed method overloads.
     /// </summary>
     /// <typeparam name="T">The entity type for this query builder.</typeparam>
-    internal class QueryBuilder<T> : IQueryBuilder<T>
+    internal class Query<T> : IQuery<T>
     {
-        private readonly QueryBuilder _innerBuilder;
+        private readonly Query _inner;
 
-        public QueryBuilder()
+        public Query()
         {
-            _innerBuilder = new QueryBuilder();
+            _inner = new Query();
         }
 
-        internal QueryBuilder(QueryBuilder innerBuilder)
+        internal Query(Query inner)
         {
-            _innerBuilder = innerBuilder ?? throw new ArgumentNullException(nameof(innerBuilder));
+            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         }
 
         // Explicit implementations of IQueryBuilder (non-generic interface)
-        IQueryBuilder IQueryBuilder.WithPagination(int page, int pageSize)
+        IQuery IQuery.WithPagination(int page, int pageSize)
         {
-            _innerBuilder.WithPagination(page, pageSize);
+            _inner.WithPagination(page, pageSize);
             return this;
         }
 
-        IQueryBuilder IQueryBuilder.WithPagination(Action<Pagination> configure)
+        IQuery IQuery.WithPagination(Action<Pagination> configure)
         {
-            _innerBuilder.WithPagination(configure);
+            _inner.WithPagination(configure);
             return this;
         }
 
-        IQueryBuilder IQueryBuilder.SortBy(string field, SortOrder order)
+        IQuery IQuery.SortBy(string field, SortOrder order)
         {
-            _innerBuilder.SortBy(field, order);
+            _inner.SortBy(field, order);
             return this;
         }
 
-        IQueryBuilder IQueryBuilder.SortBy<TEntity>(Expression<Func<TEntity, object>> fieldSelector, SortOrder order)
+        IQuery IQuery.SortBy<TEntity>(Expression<Func<TEntity, object>> fieldSelector, SortOrder order)
         {
 
-            return _innerBuilder.SortBy(fieldSelector, order);
+            return _inner.SortBy(fieldSelector, order);
         }
 
-        IQueryBuilder IQueryBuilder.Where(Action<IFilterBuilder> configure)
+        IQuery IQuery.Where(Action<IFilterBuilder> configure)
         {
-            return _innerBuilder.Where(configure);
+            return _inner.Where(configure);
         }
 
-        IQueryBuilder IQueryBuilder.Where(IOperator filter)
+        IQuery IQuery.Where(IOperator filter)
         {
-            return _innerBuilder.Where(filter);
+            return _inner.Where(filter);
         }
 
-        IQueryBuilder IQueryBuilder.WhereAll(params IOperator[] filters)
+        IQuery IQuery.WhereAll(params IOperator[] filters)
         {
-            return _innerBuilder.WhereAll(filters);
+            return _inner.WhereAll(filters);
         }
 
-        IQueryBuilder IQueryBuilder.WithFacet(string field, string name, int size)
+        IQuery IQuery.WithFacet(string field, string name, int size)
         {
-            _innerBuilder.WithFacet(field, name, size);
+            _inner.WithFacet(field, name, size);
             return this;
         }
 
-        IQueryBuilder IQueryBuilder.WithAliases(params string[] aliases)
+        IQuery IQuery.WithAliases(params string[] aliases)
         {
-            _innerBuilder.WithAliases(aliases);
+            _inner.WithAliases(aliases);
             return this;
         }
 
         public QueryObject Build()
         {
-            return _innerBuilder.Build();
+            return _inner.Build();
         }
 
         // Public implementations of IQueryBuilder<T> (generic interface)
-        public IQueryBuilder<T> WithPagination(int page, int pageSize)
+        public IQuery<T> WithPagination(int page, int pageSize)
         {
-            _innerBuilder.WithPagination(page, pageSize);
+            _inner.WithPagination(page, pageSize);
             return this;
         }
 
-        public IQueryBuilder<T> WithPagination(Action<Pagination> configure)
+        public IQuery<T> WithPagination(Action<Pagination> configure)
         {
-            _innerBuilder.WithPagination(configure);
+            _inner.WithPagination(configure);
             return this;
         }
 
-        public IQueryBuilder<T> SortBy(string field, SortOrder order = SortOrder.Asc)
+        public IQuery<T> SortBy(string field, SortOrder order = SortOrder.Asc)
         {
-            _innerBuilder.SortBy(field, order);
+            _inner.SortBy(field, order);
             return this;
         }
 
-        public IQueryBuilder<T> SortBy(Expression<Func<T, object>> fieldSelector, SortOrder order = SortOrder.Asc)
+        public IQuery<T> SortBy(Expression<Func<T, object>> fieldSelector, SortOrder order = SortOrder.Asc)
         {
             var fieldName = GetFieldName(fieldSelector);
 
-            _innerBuilder.SortBy(fieldName, order);
+            _inner.SortBy(fieldName, order);
             return this;
         }
 
-        public IQueryBuilder<T> Where(Action<IFilterBuilder<T>> configure)
+        public IQuery<T> Where(Action<IFilterBuilder<T>> configure)
         {
             if (configure == null)
             {
@@ -123,19 +123,19 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             var filters = filterBuilder.BuildFilters();
             if (filters.Count > 0)
             {
-                _innerBuilder.WhereAll(filters.ToArray());
+                _inner.WhereAll(filters.ToArray());
             }
 
             return this;
         }
 
-        public IQueryBuilder<T> WithFacet(string field, string name = null, int size = 10)
+        public IQuery<T> WithFacet(string field, string name = null, int size = 10)
         {
-            _innerBuilder.WithFacet(ToCamelCase(field), name, size);
+            _inner.WithFacet(ToCamelCase(field), name, size);
             return this;
         }
 
-        public IQueryBuilder<T> WithFacet(Expression<Func<T, object>> fieldSelector, string name = null, int size = 10)
+        public IQuery<T> WithFacet(Expression<Func<T, object>> fieldSelector, string name = null, int size = 10)
         {
             if (fieldSelector == null)
             {
@@ -144,14 +144,14 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
 
             var fieldName = GetFieldName(fieldSelector);
 
-            _innerBuilder.WithFacet(fieldName, name, size);
+            _inner.WithFacet(fieldName, name, size);
             return this;
         }
 
 
-        public IQueryBuilder<T> WithAliases(params string[] aliases)
+        public IQuery<T> WithAliases(params string[] aliases)
         {
-            _innerBuilder.WithAliases(aliases);
+            _inner.WithAliases(aliases);
             return this;
         }
 

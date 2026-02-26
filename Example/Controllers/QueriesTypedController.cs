@@ -23,7 +23,7 @@ public class QueriesTypedController : Controller
     [HttpGet("api/fluent/typed/single")]
     public async Task<IActionResult> GetQueryAsync()
     {
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery<Movie>("recent-high-budget-key", "movies", builder => builder
                 .Where(f => f
                     .GreaterThanOrEquals(x => x.ReleaseDate, DateTimeOffset.Parse("2025-09-19"))
@@ -55,7 +55,7 @@ public class QueriesTypedController : Controller
     public async Task<IActionResult> GetQueriesAsync()
     {
         // Show how to build a multi-query request with 5 different queries using the MultiQueryBuilder
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery<Movie>("recent-high-budget-key", "movies", builder => builder
                 .Where(f => f
                     .GreaterThanOrEquals(x => x.ReleaseDate, DateTimeOffset.Parse("2025-09-19"))

@@ -16,6 +16,6 @@ namespace Enterspeed.Query.Sdk.Api.Services
         /// <param name="queries">Will be turned in to the request body when posted</param>
         /// <param name="cancellationToken"></param>
         /// <returns>A MultiQueryApiResponse containing individual success/failure responses per query</returns>
-        Task<MultiQueryApiResponse> Query(string apiKey, QueryRequest queries, CancellationToken? cancellationToken = null);
+        Task<QueryApiResponse> Query(string apiKey, QueryRequest queries, CancellationToken? cancellationToken = null);
     }
 }

@@ -1,8 +1,10 @@
 namespace Enterspeed.Query.Sdk.Tests.Domain.Builders.Tests;
 
 using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Enterspeed.Query.Sdk.Domain.Builders.Filter;
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
 using Enterspeed.Query.Sdk.Domain.Builders.Query;
 using Enterspeed.Query.Sdk.Domain.Models;
 using Enterspeed.Query.Sdk.Domain.Models.FilterOperators;
@@ -12,396 +14,353 @@ using static VerifyXunit.Verifier;
 
 public class QueryBuilderTests
 {
+    #region Records for typed query tests
+    private record User
+    {
+        [JsonPropertyName("updatedAt")]
+        public DateTime UpdatedAt { get; set; }
+        [JsonPropertyName("active")]
+        public bool Active { get; set; }
+        [JsonPropertyName("department")]
+        public string Department { get; set; }
+    }
+
+    private record Product
+    {
+        public string Name { get; set; }
+        [JsonPropertyName("price")]
+
+        public decimal Price { get; set; }
+        public bool Active { get; set; }
+        public string Department { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+    #endregion
+
+    #region Query Construction Tests
+
     [Fact]
-    public Task Build_WithNoPagination_ReturnsQueryWithNullPagination()
+    public Task AddQuery_WithFluentBuilder_AddsQuerySuccessfully()
     {
         var builder = new QueryBuilder();
+        builder.AddQuery("users", "user-index", q => q
+            .WithPagination(0, 10)
+            .SortBy("name", SortOrder.Asc));
         var result = builder.Build();
         return Verify(result);
     }
 
     [Fact]
-    public Task WithPagination_ValidValues_SetsPagination()
+    public Task AddQuery_WithPreConstructedQuery_AddsQuerySuccessfully()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .WithPagination(2, 50)
-            .Build();
-        return Verify(result);
-    }
-
-    [Theory]
-    [InlineData(-1, 10)]
-    [InlineData(-5, 20)]
-    public void WithPagination_NegativePage_ThrowsArgumentException(int page, int pageSize)
-    {
-        var builder = new QueryBuilder();
-        Action act = () => builder.WithPagination(page, pageSize);
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*Page number must be non-negative*");
-    }
-
-    [Theory]
-    [InlineData(0, 0)]
-    [InlineData(1, -1)]
-    public void WithPagination_InvalidPageSize_ThrowsArgumentException(int page, int pageSize)
-    {
-        var builder = new QueryBuilder();
-        Action act = () => builder.WithPagination(page, pageSize);
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*Page size must be positive*");
-    }
-
-    [Fact]
-    public Task SortBy_ValidField_AddsSortCriterion()
-    {
-        var builder = new QueryBuilder();
-        var result = builder
-            .SortBy("name", SortOrder.Asc)
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task SortBy_MultipleCriteria_AddsAllSorts()
-    {
-        var builder = new QueryBuilder();
-        var result = builder
-            .SortBy("name", SortOrder.Asc)
-            .SortBy("createdAt", SortOrder.Desc)
-            .Build();
-        return Verify(result);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void SortBy_NullOrEmptyField_ThrowsArgumentException(string field)
-    {
-        var builder = new QueryBuilder();
-        Action act = () => builder.SortBy(field);
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*Field name cannot be null or whitespace*");
-    }
-
-    [Fact]
-    public Task Where_ValidFilter_AddsFilter()
-    {
-        var builder = new QueryBuilder();
-        var filter = new EqualsOperator<string>
+        var query = new QueryObject
         {
-            Field = "status", Value = "active"
-        };
-        var result = builder
-            .Where(filter)
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public void Where_NullFilter_ThrowsArgumentNullException()
-    {
-        var builder = new QueryBuilder();
-        Action act = () => builder.Where((FilterOperator)null);
-        act.Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact]
-    public Task WhereAll_MultipleFilters_AddsAllFilters()
-    {
-        var builder = new QueryBuilder();
-        var filter1 = new EqualsOperator<string>
-        {
-            Field = "status", Value = "active"
-        };
-        var filter2 = new GreaterThanOperator<int>
-        {
-            Field = "age", Value = 18
-        };
-        var result = builder
-            .WhereAll(filter1, filter2)
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task WhereAll_NoFilters_DoesNotThrow()
-    {
-        var builder = new QueryBuilder();
-        var result = builder.WhereAll().Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task WithFacet_ValidField_AddsFacet()
-    {
-        var builder = new QueryBuilder();
-        var result = builder
-            .WithFacet("category", "categoryFacet", 20)
-            .Build();
-        return Verify(result);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void WithFacet_NullOrEmptyField_ThrowsArgumentException(string field)
-    {
-        var builder = new QueryBuilder();
-        Action act = () => builder.WithFacet(field);
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*Field name cannot be null or whitespace*");
-    }
-
-    [Fact]
-    public Task WithAliases_ValidAliases_AddsAliases()
-    {
-        var builder = new QueryBuilder();
-        var result = builder
-            .WithAliases("alias1", "alias2", "alias3")
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task WithAliases_NoAliases_DoesNotThrow()
-    {
-        var builder = new QueryBuilder();
-        var result = builder.WithAliases().Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task Build_CompleteQuery_ReturnsFullyConfiguredQuery()
-    {
-        var builder = new QueryBuilder();
-        var filter = new EqualsOperator<string>
-        {
-            Field = "status", Value = "active"
-        };
-        var result = builder
-            .WithPagination(0, 10)
-            .SortBy("name", SortOrder.Asc)
-            .Where(filter)
-            .WithFacet("category", size: 15)
-            .WithAliases("detailView")
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task Build_FluentChaining_AllowsMethodChaining()
-    {
-        var result = new QueryBuilder()
-            .WithPagination(0, 5)
-            .SortBy("updatedAt", SortOrder.Desc)
-            .Where(new EqualsOperator<bool>
+            Pagination = new Pagination
             {
-                Field = "active", Value = true
-            })
-            .Build();
-        return Verify(result);
-    }
-
-    #region Lambda-Based Where() Tests
-
-    [Fact]
-    public Task Where_WithLambdaFilter_BuildsFilter()
-    {
-        var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f.Equals("status", "active"))
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task Where_WithLambdaAndMultipleConditions_WrapsInAndOperator()
-    {
-        var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f
-                .Equals("status", "active")
-                .GreaterThan("age", 18))
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task Where_WithLambdaAndCaseInsensitive_SetsCaseInsensitiveProperty()
-    {
-        var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f.Equals("status", "active", caseInsensitive: true))
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task Where_WithLambdaAndNestedOr_CreatesOrOperator()
-    {
-        var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f
-                .Equals("title", "hoodie")
-                .Or(o => o
-                    .Equals("isInStock", true)
-                    .Equals("allowPreorder", true)))
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task Where_MultipleLambdaCalls_AccumulatesWithAnd()
-    {
-        var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f.Equals("status", "active"))
-            .Where(f => f.GreaterThan("age", 18))
-            .Where(f => f.NotEquals("role", "guest"))
-            .Build();
-        return Verify(result);
-    }
-
-    [Fact]
-    public Task Where_MixedLambdaAndPowerUserAPI_AccumulatesAll()
-    {
-        var builder = new QueryBuilder();
-        var powerUserFilter = new EqualsOperator<bool>
-        {
-            Field = "verified", Value = true
+                Page = 0, PageSize = 5
+            }
         };
-        var result = builder
-            .Where(f => f.Equals("status", "active"))
-            .Where(powerUserFilter)
-            .Where(f => f.GreaterThan("age", 18))
-            .Build();
+        builder.AddQuery("products", "product-index", query);
+        var result = builder.Build();
         return Verify(result);
     }
 
     [Fact]
-    public Task Where_WithLambdaAndEmptyFilter_DoesNotAddFilter()
+    public Task AddQuery_MultipleQueries_AddsAllWithUniqueKeys()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .Where(_ => { })
-            .Build();
+        builder
+            .AddQuery<User>("users", "user-index", q => q.WithPagination(0, 10))
+            .AddQuery<Product>("products", "product-index", q => q.WithPagination(0, 5))
+            .AddQuery("orders", "order-index", new QueryObject());
+        var result = builder.Build();
         return Verify(result);
     }
 
     [Fact]
-    public void Where_WithNullLambda_ThrowsArgumentNullException()
+    public void AddQuery_DuplicateKey_ThrowsArgumentException()
     {
         var builder = new QueryBuilder();
-        Action act = () => builder.Where((Action<IFilterBuilder>)null);
+        builder.AddQuery("users", "user-index", q => q.WithPagination(0, 10));
+        Action act = () => builder.AddQuery("users", "another-index", q => q.WithPagination(0, 5));
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*key 'users' has already been added*")
+            .And.ParamName.Should().Be("key");
+    }
+
+    [Fact]
+    public void AddQueryWithType_DuplicateKey_ThrowsArgumentException()
+    {
+        // Arrange
+        var builder = new QueryBuilder();
+
+        // Act
+        builder.AddQuery<Product>("products", "product-index", q => q
+            .Where(filter => filter
+                .Equals(p => p.Active, true)));
+
+        Action act = () => builder.AddQuery<Product>("products", "product-index", q => q
+            .Where(filter => filter
+                .GreaterThan(p => p.Price, 100m)));
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("A query with the key 'products' has already been added. Each query must have a unique key. (Parameter 'key')");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void AddQuery_NullOrEmptyKey_ThrowsArgumentException(string key)
+    {
+        var builder = new QueryBuilder();
+        Action act = () => builder.AddQuery(key, "index", _ => { });
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*Query key cannot be null or empty*");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void AddQuery_NullOrEmptyIndex_ThrowsArgumentException(string index)
+    {
+        var builder = new QueryBuilder();
+        Action act = () => builder.AddQuery("key", index, _ => { });
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*Index cannot be null or empty*");
+    }
+
+    [Fact]
+    public void AddQuery_NullBuilderAction_ThrowsArgumentNullException()
+    {
+        var builder = new QueryBuilder();
+        Action act = () => builder.AddQuery("key", "index", (Action<IQuery>)null);
         act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public Task Where_WithLambdaAndInOperator_AddsInOperator()
+    public void AddQuery_NullQueryObject_ThrowsArgumentNullException()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f.In("category", "electronics", "computers", "phones"))
-            .Build();
-        return Verify(result);
+        Action act = () => builder.AddQuery("key", "index", (QueryObject)null);
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public Task Where_WithLambdaAndContainsOperator_AddsContainsOperator()
+    public void AddQuery_ExceedsMaximumQueries_ThrowsInvalidOperationException()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f.Contains("description", "*premium*", caseInsensitive: true))
-            .Build();
-        return Verify(result);
+        builder.AddQuery("q1", "index", _ => { });
+        builder.AddQuery("q2", "index", _ => { });
+        builder.AddQuery("q3", "index", _ => { });
+        builder.AddQuery("q4", "index", _ => { });
+        builder.AddQuery("q5", "index", _ => { });
+        Action act = () => builder.AddQuery("q6", "index", q => { });
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Cannot add more than 5 queries*");
+    }
+
+    #endregion
+
+    #region Build Tests
+
+    [Fact]
+    public Task Build_WithValidQueries_ReturnsImmutableRequest()
+    {
+        var builder = new QueryBuilder();
+        builder.AddQuery("users", "user-index", q => q.WithPagination(0, 10));
+        var request = builder.Build();
+        return Verify(request);
     }
 
     [Fact]
-    public Task Where_ComplexNestedLambda_BuildsCorrectStructure()
+    public Task AddQuery_WithTypedFilters_BuildsCorrectQuery()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f
-                .Equals("status", "active")
-                .Or(o => o
-                    .Equals("isInStock", true)
-                    .Equals("allowPreorder", true))
-                .And(a => a
-                    .GreaterThanOrEquals("price", 10)
-                    .LessThanOrEquals("price", 100)))
-            .Build();
-        return Verify(result);
+        builder.AddQuery<Product>("products", "product-index", q => q
+            .WithPagination(0, 20)
+            .SortBy(p => p.UpdatedAt, SortOrder.Desc)
+            .Where(filter => filter
+                .Equals(p => p.Active, true)));
+
+        var request = builder.Build();
+
+        return Verify(request);
     }
 
     [Fact]
-    public Task Where_WithLambdaAndPagination_CombinesBoth()
+    public void Build_NoQueries_ThrowsInvalidOperationException()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .WithPagination(0, 10)
-            .Where(f => f.Equals("status", "active"))
+        Action act = () => builder.Build();
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Cannot build a multi-query request with no queries*");
+    }
+
+    [Fact]
+    public Task Build_AfterBuild_OriginalBuilderIsNotAffected()
+    {
+        var builder = new QueryBuilder();
+        builder.AddQuery("users", "user-index", _ => { });
+        var request1 = builder.Build();
+        builder.AddQuery("products", "product-index", _ => { });
+        var request2 = builder.Build();
+        return Verify(new
+        {
+            request1, request2
+        });
+    }
+
+    #endregion
+
+    #region Serialization & API Contract Tests
+
+    [Fact]
+    public Task Build_WithPagination_BuildsExpectedRequest()
+    {
+        var builder = new QueryBuilder();
+        builder.AddQuery("test", "test-index", q => q.WithPagination(2, 50));
+        var request = builder.Build();
+        return Verify(request);
+    }
+
+    [Fact]
+    public Task Build_WithSorting_BuildsExpectedRequest()
+    {
+        var builder = new QueryBuilder();
+        builder.AddQuery("test", "test-index", q => q
             .SortBy("name", SortOrder.Asc)
-            .Build();
-        return Verify(result);
+            .SortBy("createdAt", SortOrder.Desc));
+        var request = builder.Build();
+        return Verify(request);
     }
 
     [Fact]
-    public Task Where_WithLambdaAndFacets_CombinesBoth()
+    public Task Build_WithFilters_BuildsExpectedRequest()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f.Equals("status", "active"))
-            .WithFacet("category", size: 20)
-            .Build();
-        return Verify(result);
+        var filter = new EqualsOperator<string>
+        {
+            Field = "status", Value = "active"
+        };
+        builder.AddQuery("test", "test-index", q => q.Where(filter));
+        var request = builder.Build();
+        return Verify(request);
+    }
+
+
+    [Fact]
+    public Task Build_WithFacets_BuildsExpectedRequest()
+    {
+        var builder = new QueryBuilder();
+        builder.AddQuery("test", "test-index", q => q
+            .WithFacet("category", "categoryFacet", 25));
+        var request = builder.Build();
+        return Verify(request);
     }
 
     [Fact]
-    public Task Where_WithLambdaAndAliases_CombinesBoth()
+    public Task Build_WithAliases_BuildsExpectedRequest()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f.Equals("isFeatured", true))
-            .WithAliases("tile", "detail")
-            .Build();
-        return Verify(result);
+        builder.AddQuery("test", "test-index", q => q
+            .WithAliases("view1", "view2"));
+        var request = builder.Build();
+        return Verify(request);
     }
 
     [Fact]
-    public Task Where_MultipleLambdaCallsWithComplexFilters_BuildsCorrectStructure()
+    public Task Build_WithMultipleQueries_BuildsExpectedRequest()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f
-                .Equals("status", "active")
-                .GreaterThan("age", 18))
-            .Where(f => f.Or(o => o
-                .Equals("role", "admin")
-                .Equals("role", "moderator")))
-            .Where(f => f.NotEquals("banned", true))
-            .Build();
-        return Verify(result);
+        builder
+            .AddQuery("users", "user-index", q => q
+                .WithPagination(0, 10)
+                .SortBy("updatedAt", SortOrder.Desc)
+                .Where(new EqualsOperator<bool>
+                {
+                    Field = "active",
+                    Value = true
+                })
+                .WithFacet("department"))
+            .AddQuery("products", "product-index", q => q
+                .WithPagination(0, 20)
+                .SortBy("price", SortOrder.Asc)
+                .WithAliases("tile", "detail"));
+        var request = builder.Build();
+        return Verify(request);
     }
 
     [Fact]
-    public Task Where_WithLambdaAndAllOperators_BuildsCorrectly()
+    public Task Build_WithTypedQueries_BuildsExpectedRequest()
     {
         var builder = new QueryBuilder();
-        var result = builder
-            .Where(f => f
-                .Equals("status", "active")
-                .NotEquals("role", "guest")
-                .GreaterThan("age", 18)
-                .GreaterThanOrEquals("score", 75)
-                .LessThan("failedAttempts", 3)
-                .LessThanOrEquals("discount", 50)
-                .Contains("description", "*premium*")
-                .In("category", "electronics", "computers"))
-            .Build();
-        return Verify(result);
+        builder
+            .AddQuery<User>("users", "user-index", q => q
+                .WithPagination(page: 0, pageSize: 10)
+                .SortBy(x => x.UpdatedAt, SortOrder.Desc)
+                .Where(x => x.Equals(user => user.Active, true))
+                .WithFacet(x => x.Department))
+            .AddQuery<Product>("products", "product-index", q => q
+                .WithPagination(page: 0, pageSize: 20)
+                .SortBy(x => x.Price, SortOrder.Asc)
+                .WithAliases("title", "detail"));
+        var request = builder.Build();
+        return Verify(request);
+    }
+
+
+    #endregion
+
+    #region Helper Method Tests
+
+    [Fact]
+    public void ContainsKey_ExistingKey_ReturnsTrue()
+    {
+        var builder = new QueryBuilder();
+        builder.AddQuery("users", "user-index", _ => { });
+        var result = builder.ContainsKey("users");
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ContainsKey_NonExistingKey_ReturnsFalse()
+    {
+        var builder = new QueryBuilder();
+        builder.AddQuery("users", "user-index", _ => { });
+        var result = builder.ContainsKey("products");
+        result.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void ContainsKey_NullOrEmptyKey_ReturnsFalse(string key)
+    {
+        var builder = new QueryBuilder();
+        var result = builder.ContainsKey(key);
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Count_InitiallyZero()
+    {
+        var builder = new QueryBuilder();
+        builder.Count.Should().Be(0);
+    }
+
+    [Fact]
+    public void Count_IncreasesWithEachQuery()
+    {
+        var builder = new QueryBuilder();
+        builder.AddQuery("q1", "index", _ => { });
+        builder.AddQuery("q2", "index", _ => { });
+        builder.AddQuery("q3", "index", _ => { });
+        builder.Count.Should().Be(3);
     }
 
     #endregion

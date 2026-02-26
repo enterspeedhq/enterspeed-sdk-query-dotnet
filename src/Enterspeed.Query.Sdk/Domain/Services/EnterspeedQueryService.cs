@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Enterspeed.Query.Sdk.Api.Models.Response;
 using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 
 namespace Enterspeed.Query.Sdk.Domain.Services
 {
@@ -26,7 +26,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             _serializer = jsonSerializer ?? throw new ArgumentNullException(nameof(jsonSerializer));
         }
 
-        public async Task<MultiQueryApiResponse> Query(
+        public async Task<Api.Models.Response.QueryApiResponse> Query(
             string apiKey,
             QueryRequest queries,
             CancellationToken? cancellationToken = null)
@@ -40,8 +40,8 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             return await QueryApiResponseMultiple(apiKey, requestUri, httpContent, cancellationToken);
         }
 
-        private async Task<MultiQueryApiResponse> QueryApiResponseMultiple(string apiKey, Uri requestUri,
-            HttpContent content, CancellationToken? cancellationToken = null)
+        private async Task<Api.Models.Response.QueryApiResponse> QueryApiResponseMultiple(string apiKey, Uri requestUri,
+                                                                                          HttpContent content, CancellationToken? cancellationToken = null)
         {
             try
             {
@@ -50,16 +50,16 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                 var responseString = await httpResponse.Content.ReadAsStringAsync();
 
                 // Deserialize the response - works for both OK (mixed responses) and BadRequest (all errors)
-                var response = _serializer.Deserialize<List<MultiQueryResponse>>(responseString);
+                var response = _serializer.Deserialize<List<QueryResponse>>(responseString);
 
                 // Convert to SDK response type using extension method
-                var convertedResponses = response.ToMultiQueryResponse();
+                var convertedResponses = response.ToQueryResponse();
 
                 if (httpResponse.StatusCode == System.Net.HttpStatusCode.BadRequest)
                 {
                     // Extract error messages from all error responses
                     var errorMessages = response
-                        .OfType<MultiQueryResponseError>()
+                        .OfType<QueryResponseError>()
                         .Select(r => r.Message)
                         .Where(m => !string.IsNullOrEmpty(m))
                         .ToList();
@@ -68,7 +68,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                         ? errorMessages.First() // Use first error message for the main message
                         : "All queries failed";
 
-                    return new MultiQueryApiResponse(_serializer)
+                    return new Api.Models.Response.QueryApiResponse(_serializer)
                     {
                         StatusCode = httpResponse.StatusCode,
                         Headers = httpResponse.Headers,
@@ -79,7 +79,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
 
                 if (httpResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    return new MultiQueryApiResponse(_serializer)
+                    return new Api.Models.Response.QueryApiResponse(_serializer)
                     {
                         StatusCode = httpResponse.StatusCode,
                         Headers = httpResponse.Headers,
@@ -89,7 +89,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                 }
 
                 // Handle other HTTP status codes
-                return new MultiQueryApiResponse(_serializer)
+                return new Api.Models.Response.QueryApiResponse(_serializer)
                 {
                     StatusCode = httpResponse.StatusCode,
                     Headers = httpResponse.Headers,
@@ -100,7 +100,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
             }
             catch (Exception ex)
             {
-                return new MultiQueryApiResponse
+                return new Api.Models.Response.QueryApiResponse
                 {
                     StatusCode = System.Net.HttpStatusCode.BadRequest,
                     Message = $"Failed to deserialize multi query response: {ex.Message}",

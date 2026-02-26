@@ -1,4 +1,4 @@
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 
 namespace Enterspeed.Query.Sdk.Tests.Domain.Services.Tests;
 
@@ -25,7 +25,7 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 
-public class EnterspeedQueryServiceMultiQueryTests
+public class EnterspeedQueryServiceQueryTests
 {
     private const string TestApiKey = "environment-test-guid";
     private readonly IJsonSerializer _serializer;
@@ -52,7 +52,7 @@ public class EnterspeedQueryServiceMultiQueryTests
         public string Status { get; set; }
     }
 
-    public EnterspeedQueryServiceMultiQueryTests()
+    public EnterspeedQueryServiceQueryTests()
     {
         _serializer = new SystemTextJsonSerializer();
         var config = new EnterspeedQueryConfiguration();
@@ -72,7 +72,7 @@ public class EnterspeedQueryServiceMultiQueryTests
     public async Task MultiQuery_WithSuccessfulQueries_ReturnsTypedResponses()
     {
         // Arrange - Build multi-query request
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery<Product>("products", "product-index", builder => builder
                 .Where(f => f.GreaterThan(x => x.Stock, 0))
                 .WithPagination(0, 10))
@@ -205,7 +205,7 @@ public class EnterspeedQueryServiceMultiQueryTests
     public async Task MultiQuery_WithPartialFailure_ReturnsIndependentResponses()
     {
         // Arrange
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("products", "product-index", builder => builder
                 .WithPagination(0, 10))
             .AddQuery("invalid", "invalid-index", builder => builder
@@ -286,7 +286,7 @@ public class EnterspeedQueryServiceMultiQueryTests
     public async Task MultiQuery_WithMissingQueryKey_ReturnsFailure()
     {
         // Arrange
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("products", "product-index", builder => builder.WithPagination(0, 10))
             .Build();
 
@@ -331,7 +331,7 @@ public class EnterspeedQueryServiceMultiQueryTests
     public async Task MultiQuery_WithTypeMismatch_ReturnsFailure()
     {
         // Arrange
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("products", "product-index", builder => builder.WithPagination(0, 10))
             .Build();
 
@@ -396,7 +396,7 @@ public class EnterspeedQueryServiceMultiQueryTests
     public async Task MultiQuery_ResponseCaching_ReturnsSameInstance()
     {
         // Arrange
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("products", "product-index", builder => builder.WithPagination(0, 10))
             .Build();
 
@@ -451,7 +451,7 @@ public class EnterspeedQueryServiceMultiQueryTests
     public async Task MultiQuery_WithFacets_ReturnsFacetData()
     {
         // Arrange
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("products", "product-index", builder => builder
                 .WithPagination(0, 10))
             .Build();
@@ -545,9 +545,9 @@ public class EnterspeedQueryServiceMultiQueryTests
     public void MultiQuery_ContainsQuery_ChecksExistence()
     {
         // Arrange
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = new Dictionary<string, MultiQueryResponse>()
+            Response = new Dictionary<string, QueryResponse>()
         };
 
         // Act & Assert
@@ -558,9 +558,9 @@ public class EnterspeedQueryServiceMultiQueryTests
     public void MultiQuery_GetQueryNames_ReturnsAllNames()
     {
         // Arrange
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = new Dictionary<string, MultiQueryResponse>()
+            Response = new Dictionary<string, QueryResponse>()
         };
 
         // Act
@@ -645,7 +645,7 @@ public class EnterspeedQueryServiceMultiQueryTests
                 Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
             });
 
-        var queryRequest = new MultiQueryBuilder()
+        var queryRequest = new QueryBuilder()
             .AddQuery(name, index, builder => builder
                 .SortBy("_updatedAt", SortOrder.Desc)
                 .WithPagination(0, 10))
@@ -705,7 +705,7 @@ public class EnterspeedQueryServiceMultiQueryTests
                 Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
             });
 
-        var queryRequest = new MultiQueryBuilder()
+        var queryRequest = new QueryBuilder()
             .AddQuery("products", "product-index", builder => builder
                 .SortBy("invalidField", SortOrder.Desc)  // Invalid sort field to trigger error
                 .WithPagination(0, 10))
@@ -772,7 +772,7 @@ public class EnterspeedQueryServiceMultiQueryTests
                 Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
             });
 
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("query1", "invalid-index-1", builder => builder.WithPagination(0, 10))
             .AddQuery("query2", "invalid-index-2", builder => builder.WithPagination(0, 10))
             .Build();

@@ -1,5 +1,3 @@
-
-
 namespace Enterspeed.Query.Sdk.Tests.Api.Models.Test.Response;
 using System;
 using System.Collections.Generic;
@@ -17,7 +15,7 @@ using Configuration;
 using Enterspeed.Query.Sdk.Domain.Services;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;
 using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
@@ -25,7 +23,7 @@ using static VerifyXunit.Verifier;
 
 using Xunit;
 
-public class MultiQueryApiResponseTests
+public class QueryApiResponseTests
 {
     private record TestBook
     {
@@ -44,9 +42,9 @@ public class MultiQueryApiResponseTests
     public Task Get_WithNullQueryName_ReturnsFailure()
     {
         // Arrange
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = new Dictionary<string, MultiQueryResponse>()
+            Response = new Dictionary<string, QueryResponse>()
         };
 
         // Act
@@ -60,9 +58,9 @@ public class MultiQueryApiResponseTests
     public Task Get_WithEmptyQueryName_ReturnsFailure()
     {
         // Arrange
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = new Dictionary<string, MultiQueryResponse>()
+            Response = new Dictionary<string, QueryResponse>()
         };
 
         // Act
@@ -76,7 +74,7 @@ public class MultiQueryApiResponseTests
     public Task Get_WithNullResponseList_ReturnsFailure()
     {
         // Arrange
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
             Response = null
         };
@@ -92,10 +90,10 @@ public class MultiQueryApiResponseTests
     public Task Get_WithMissingQueryKey_ReturnsFailure()
     {
         // Arrange
-        var responseList = new List<MultiQueryResponse>();
-        var response = new MultiQueryApiResponse
+        var responseList = new List<QueryResponse>();
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -109,7 +107,7 @@ public class MultiQueryApiResponseTests
     public Task Get_WithErrorResponse_ReturnsFailure()
     {
         // Arrange
-        var errorResponse = new MultiQueryResponseError
+        var errorResponse = new QueryResponseError
         {
             Name = "books",
             Index = "books-index",
@@ -120,14 +118,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
             errorResponse
         };
 
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -141,7 +139,7 @@ public class MultiQueryApiResponseTests
     public Task Get_WithSuccessResponse_ReturnsSuccess()
     {
         // Arrange
-        var successResponse = new MultiQueryResponseSuccess
+        var successResponse = new QueryResponseSuccess<Dictionary<string, object>>()
         {
             Name = "books",
             Index = "books-index",
@@ -175,14 +173,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
             successResponse
         };
 
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -196,7 +194,7 @@ public class MultiQueryApiResponseTests
     public Task Get_WithSuccessResponse_ValueReturnsFirstResult()
     {
         // Arrange
-        var successResponse = new MultiQueryResponseSuccess
+        var successResponse = new QueryResponseSuccess<Dictionary<string, object>>()
         {
             Name = "books",
             Index = "books-index",
@@ -230,13 +228,13 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
             successResponse
         };
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -252,7 +250,7 @@ public class MultiQueryApiResponseTests
     public Task Get_WithMultipleQueries_ReturnsIndependentResponses()
     {
         // Arrange
-        var booksResponse = new MultiQueryResponseSuccess
+        var booksResponse = new QueryResponseSuccess<Dictionary<string, object>>()
         {
             Name = "books",
             Index = "books-index",
@@ -274,7 +272,7 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var authorsResponse = new MultiQueryResponseSuccess
+        var authorsResponse = new QueryResponseSuccess<Dictionary<string, object>>()
         {
             Name = "authors",
             Index = "authors-index",
@@ -293,14 +291,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
             booksResponse,
             authorsResponse
         };
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -318,7 +316,7 @@ public class MultiQueryApiResponseTests
     public Task Get_WithPartialFailure_IndependentQueriesNotAffected()
     {
         // Arrange
-        var successResponse = new MultiQueryResponseSuccess
+        var successResponse = new QueryResponseSuccess<Dictionary<string, object>>()
         {
             Name = "books",
             Index = "books-index",
@@ -340,21 +338,21 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var errorResponse = new MultiQueryResponseError
+        var errorResponse = new QueryResponseError
         {
             Name = "authors",
             Index = "authors-index",
             Message = "Query failed"
         };
 
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
             successResponse,
             errorResponse
         };
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -372,7 +370,7 @@ public class MultiQueryApiResponseTests
     public void Get_CachesResultsPerQueryAndType()
     {
         // Arrange
-        var successResponse = new MultiQueryResponseSuccess
+        var successResponse = new QueryResponseSuccess<Dictionary<string, object>>()
         {
             Name = "books",
             Index = "books-index",
@@ -394,14 +392,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
             successResponse
         };
 
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -416,20 +414,20 @@ public class MultiQueryApiResponseTests
     public Task ContainsQuery_WithExistingSuccessQuery_ReturnsTrue()
     {
         // Arrange
-        var successResponse = new MultiQueryResponseSuccess
+        var successResponse = new QueryResponseSuccess<Dictionary<string, object>>()
         {
             Name = "books",
             Index = "books-index"
         };
 
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
             successResponse
         };
 
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -443,20 +441,20 @@ public class MultiQueryApiResponseTests
     public Task ContainsQuery_WithExistingErrorQuery_ReturnsTrue()
     {
         // Arrange
-        var errorResponse = new MultiQueryResponseError
+        var errorResponse = new QueryResponseError
         {
             Name = "books",
             Index = "books-index"
         };
 
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
             errorResponse
         };
 
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -470,10 +468,10 @@ public class MultiQueryApiResponseTests
     public Task ContainsQuery_WithNonExistingQuery_ReturnsFalse()
     {
         // Arrange
-        var responseList = new List<MultiQueryResponse>();
-        var response = new MultiQueryApiResponse
+        var responseList = new List<QueryResponse>();
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -487,25 +485,25 @@ public class MultiQueryApiResponseTests
     public Task GetQueryNames_WithMultipleQueries_ReturnsAllNames()
     {
         // Arrange
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
-            new MultiQueryResponseSuccess
+            new QueryResponseSuccess<Dictionary<string, object>>()
             {
                 Name = "books", Index = "books-index"
             },
-            new MultiQueryResponseSuccess
+            new QueryResponseSuccess<Dictionary<string, object>>()
             {
                 Name = "authors", Index = "authors-index"
             },
-            new MultiQueryResponseError
+            new QueryResponseError
             {
                 Name = "categories", Index = "categories-index"
             }
         };
 
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -519,7 +517,7 @@ public class MultiQueryApiResponseTests
     public Task GetQueryNames_WithEmptyResponse_ReturnsEmptyList()
     {
         // Arrange
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
             Response = null
         };
@@ -535,7 +533,7 @@ public class MultiQueryApiResponseTests
     public Task Get_WithFacets_ReturnsFacetsInSuccess()
     {
         // Arrange
-        var successResponse = new MultiQueryResponseSuccess
+        var successResponse = new QueryResponseSuccess<Dictionary<string, object>>()
         {
             Name = "books",
             Index = "books-index",
@@ -569,14 +567,14 @@ public class MultiQueryApiResponseTests
             }
         };
 
-        var responseList = new List<MultiQueryResponse>
+        var responseList = new List<QueryResponse>
         {
             successResponse
         };
 
-        var response = new MultiQueryApiResponse
+        var response = new QueryApiResponse
         {
-            Response = responseList.ToMultiQueryResponse()
+            Response = responseList.ToQueryResponse()
         };
 
         // Act
@@ -597,7 +595,7 @@ public class MultiQueryApiResponseTests
         // 3. Validate the typed results can be retrieved correctly
 
         // STEP 1: Build multi-query request using fluent builder
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("books", "book-index", builder => builder
                 .Where(f => f.Equals("category", "fiction"))
                 .WithPagination(0, 10))
@@ -745,7 +743,7 @@ public class MultiQueryApiResponseTests
         // Validates that one failing query doesn't affect other successful queries
 
         // STEP 1: Build request
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("valid-query", "valid-index", builder => builder.WithPagination(0, 10))
             .AddQuery("invalid-query", "invalid-index", builder => builder.WithPagination(0, 10))
             .Build();

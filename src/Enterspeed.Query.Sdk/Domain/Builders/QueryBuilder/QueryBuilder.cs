@@ -9,7 +9,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
     /// Fluent builder for constructing multi-query requests.
     /// Allows adding multiple queries with unique keys that will be executed in a single API call.
     /// </summary>
-    public class MultiQueryBuilder : IMultiQueryBuilder
+    public class QueryBuilder : IQueryBuilder
     {
         private const int MaxQueriesPerRequest = 5;
         private readonly Dictionary<string, MultiQueryObject> _queries = new Dictionary<string, MultiQueryObject>();
@@ -28,7 +28,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
         /// <returns>This builder instance for method chaining.</returns>
         /// <exception cref="ArgumentException">Thrown when key or index is null/empty, or key is duplicate.</exception>
         /// <exception cref="InvalidOperationException">Thrown when maximum query limit is exceeded.</exception>
-        public MultiQueryBuilder AddQuery(string key, string index, Action<IQueryBuilder> builderAction)
+        public QueryBuilder AddQuery(string key, string index, Action<IQuery> builderAction)
         {
             ValidateKey(key);
             ValidateIndex(index);
@@ -39,7 +39,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
                 throw new ArgumentNullException(nameof(builderAction));
             }
 
-            var queryBuilder = new QueryBuilder();
+            var queryBuilder = new Query.Query();
             builderAction(queryBuilder);
             var queryObject = queryBuilder.Build();
 
@@ -47,7 +47,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
             return this;
         }
 
-        public MultiQueryBuilder AddQuery<T>(string key, string index, Action<IQueryBuilder<T>> builderAction)
+        public QueryBuilder AddQuery<T>(string key, string index, Action<IQuery<T>> builderAction)
         {
             ValidateKey(key);
             ValidateIndex(index);
@@ -58,7 +58,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
                 throw new ArgumentNullException(nameof(builderAction));
             }
 
-            var queryBuilder = new QueryBuilder<T>();
+            var queryBuilder = new Query<T>();
             builderAction(queryBuilder);
             var queryObject = queryBuilder.Build();
 
@@ -76,7 +76,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
         /// <exception cref="ArgumentException">Thrown when key or index is null/empty, or key is duplicate.</exception>
         /// <exception cref="ArgumentNullException">Thrown when query is null.</exception>
         /// <exception cref="InvalidOperationException">Thrown when maximum query limit is exceeded.</exception>
-        public MultiQueryBuilder AddQuery(string key, string index, QueryObject query)
+        public QueryBuilder AddQuery(string key, string index, QueryObject query)
         {
             ValidateKey(key);
             ValidateIndex(index);

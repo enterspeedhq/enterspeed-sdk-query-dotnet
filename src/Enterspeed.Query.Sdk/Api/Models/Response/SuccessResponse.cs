@@ -9,7 +9,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
     /// Wraps QueryResponseSuccess from the API for SDK consumers.
     /// </summary>
     /// <typeparam name="T">The type of the response data.</typeparam>
-    public class SuccessResponse<T> : ISuccess<T>, ISuccess
+    public class SuccessResponse<T> : ISuccess<T>
     {
         private readonly QueryResponseSuccess<T> _apiResponse;
 

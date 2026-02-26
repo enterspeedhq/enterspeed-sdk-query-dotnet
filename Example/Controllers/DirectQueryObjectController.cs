@@ -25,7 +25,7 @@ public class DirectQueryObjectController : Controller
     [HttpGet("api/directqueryobject/single")]
     public async Task<IActionResult> GetQueryAsync()
     {
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("recent-high-budget-key", "movies", new QueryObject
             {
                 Filters = new AndOperator
@@ -90,7 +90,7 @@ public class DirectQueryObjectController : Controller
     public async Task<IActionResult> GetQueriesAsync()
     {
         // Show how to build a multi-query request with 5 different queries using the MultiQueryBuilder
-        var request = new MultiQueryBuilder()
+        var request = new QueryBuilder()
             .AddQuery("recent-high-budget-key", "movies", new QueryObject
             {
                 Filters = new AndOperator

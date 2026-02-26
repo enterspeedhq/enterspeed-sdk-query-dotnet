@@ -3,7 +3,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using Enterspeed.Query.Sdk.Api.Services;
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse.MultiQuery;
 using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;
 
@@ -13,17 +12,17 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
     /// Response wrapper for multi-query API calls.
     /// Wraps the multi-query response list with HTTP metadata.
     /// </summary>
-    public class MultiQueryApiResponse
+    public class QueryApiResponse
     {
         private readonly Dictionary<(string QueryName, System.Type TargetType), object> _cachedResponses = new Dictionary<(string, System.Type), object>();
         private readonly IJsonSerializer _serializer;
 
-        public MultiQueryApiResponse()
+        public QueryApiResponse()
         {
             _serializer = new SystemTextJsonSerializer();
         }
 
-        public MultiQueryApiResponse(IJsonSerializer serializer)
+        public QueryApiResponse(IJsonSerializer serializer)
         {
             _serializer = serializer ?? throw new System.ArgumentNullException(nameof(serializer));
         }
@@ -37,7 +36,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
         /// Each response contains the original data from the API.
         /// Use Get&lt;T&gt;(queryName) to retrieve and convert to typed results.
         /// </summary>
-        public Dictionary<string, MultiQueryResponse> Response { get; set; }
+        public Dictionary<string, QueryResponse> Response { get; set; }
 
         /// <summary>
         /// Retrieves a strongly-typed response for a specific query by name.
@@ -69,14 +68,14 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
             }
 
             // Handle error responses
-            if (apiResponse is MultiQueryResponseError error)
+            if (apiResponse is QueryResponseError error)
             {
                 var queryError = new QueryError
                 {
                     Index = error.Index,
                     Name = error.Name,
                     Message = error.Message,
-                    Errors = error.Errors
+                    Errors = error.Errors?.ToArray() ?? new string[0]
                 };
 
                 var failure = new ErrorResponse<T>(queryError);
@@ -86,7 +85,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
             }
 
             // Handle success responses - convert to typed results
-            if (apiResponse is MultiQueryResponseSuccess success)
+            if (apiResponse is QueryResponseSuccess<Dictionary<string, object>> success)
             {
                 try
                 {
@@ -98,6 +97,8 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
 
                     var typedSuccessResponse = new QueryResponseSuccess<T>
                     {
+                        Name = success.Name,
+                        Index = success.Index,
                         TotalResults = success.TotalResults,
                         Results = typedResults,
                         Facets = success.Facets?.ToList() ?? new List<FacetResult>()
@@ -113,9 +114,6 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
                     {
                         Message = $"Failed to convert query '{queryName}' to type {typeof(T).Name}: {ex.Message}"
                     });
-                    // Do not cache the failure to avoid no being able to query the right and type after usage the first time with the wrong type.
-                    // We can consider caching the failure with the specific type to avoid trying to convert to the same wrong type again,
-                    // but we should still be able to try with another type after a failure with a specific type.
                     return failure;
                 }
             }
