@@ -68,7 +68,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                         ? errorMessages.First() // Use first error message for the main message
                         : "All queries failed";
 
-                    return new MultiQueryApiResponse
+                    return new MultiQueryApiResponse(_serializer)
                     {
                         StatusCode = httpResponse.StatusCode,
                         Headers = httpResponse.Headers,
@@ -79,7 +79,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
 
                 if (httpResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    return new MultiQueryApiResponse
+                    return new MultiQueryApiResponse(_serializer)
                     {
                         StatusCode = httpResponse.StatusCode,
                         Headers = httpResponse.Headers,
@@ -89,7 +89,7 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                 }
 
                 // Handle other HTTP status codes
-                return new MultiQueryApiResponse
+                return new MultiQueryApiResponse(_serializer)
                 {
                     StatusCode = httpResponse.StatusCode,
                     Headers = httpResponse.Headers,

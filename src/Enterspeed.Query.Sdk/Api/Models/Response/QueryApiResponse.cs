@@ -16,6 +16,17 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
     public class MultiQueryApiResponse
     {
         private readonly Dictionary<(string QueryName, System.Type TargetType), object> _cachedResponses = new Dictionary<(string, System.Type), object>();
+        private readonly IJsonSerializer _serializer;
+
+        public MultiQueryApiResponse()
+        {
+            _serializer = new SystemTextJsonSerializer();
+        }
+
+        public MultiQueryApiResponse(IJsonSerializer serializer)
+        {
+            _serializer = serializer ?? throw new System.ArgumentNullException(nameof(serializer));
+        }
 
         public HttpStatusCode StatusCode { get; set; }
         public HttpResponseHeaders Headers { get; set; }
@@ -26,7 +37,7 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
         /// Each response contains the original data from the API.
         /// Use Get&lt;T&gt;(queryName) to retrieve and convert to typed results.
         /// </summary>
-        internal Dictionary<string, MultiQueryResponse> Response { get; set; }
+        public Dictionary<string, MultiQueryResponse> Response { get; set; }
 
         /// <summary>
         /// Retrieves a strongly-typed response for a specific query by name.
@@ -79,10 +90,9 @@ namespace Enterspeed.Query.Sdk.Api.Models.Response
             {
                 try
                 {
-                    var serializer = new SystemTextJsonSerializer(); // TODO Consider injecting serializer via constructor for flexibility
                     var typedResults = success.Results
-                        .Select(dict => serializer.Serialize(dict))
-                        .Select(json => serializer.Deserialize<T>(json))
+                        .Select(dict => _serializer.Serialize(dict))
+                        .Select(json => _serializer.Deserialize<T>(json))
                         .Where(item => item != null)
                         .ToList();
 
