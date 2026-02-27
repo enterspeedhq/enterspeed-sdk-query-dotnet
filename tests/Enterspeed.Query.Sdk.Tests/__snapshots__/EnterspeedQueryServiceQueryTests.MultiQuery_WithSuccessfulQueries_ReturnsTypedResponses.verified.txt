@@ -1,0 +1,109 @@
+﻿{
+  ApiResponse: [
+    {
+      index: product-index,
+      name: products,
+      totalResults: 200,
+      results: [
+        {
+          sku: p-5427,
+          name: Running shoe,
+          url: /products/running-shoe/,
+          originId: p-5427,
+          sourceGuid: Guid_1,
+          updatedAt: DateTimeOffset_1
+        },
+        {
+          sku: p-5428,
+          name: Tennis shoe,
+          url: /products/tennis-shoe/,
+          originId: p-5428,
+          sourceGuid: Guid_1,
+          updatedAt: DateTimeOffset_2
+        }
+      ],
+      facets: [
+        {
+          name: Categories,
+          field: category,
+          groups: [
+            {
+              value: Shoes,
+              count: 15
+            },
+            {
+              value: Accessories,
+              count: 5
+            }
+          ],
+          isValid: true
+        }
+      ]
+    },
+    {
+      index: user-index,
+      name: users,
+      totalResults: 42,
+      results: [
+        {
+          id: u-001,
+          name: John Doe,
+          email: john@example.com,
+          status: active,
+          stock: 1
+        }
+      ]
+    }
+  ],
+  ProductsResponse: {
+    Status: true,
+    Results: [
+      {
+        Sku: p-5427,
+        Name: Running shoe,
+        Url: /products/running-shoe/,
+        OriginId: p-5427,
+        SourceGuid: Guid_1,
+        UpdatedAt: DateTime_1
+      },
+      {
+        Sku: p-5428,
+        Name: Tennis shoe,
+        Url: /products/tennis-shoe/,
+        OriginId: p-5428,
+        SourceGuid: Guid_1,
+        UpdatedAt: DateTime_2
+      }
+    ],
+    TotalResults: 200,
+    Facets: [
+      {
+        Name: Categories,
+        Field: category,
+        Groups: [
+          {
+            Value: Shoes,
+            Count: 15
+          },
+          {
+            Value: Accessories,
+            Count: 5
+          }
+        ],
+        IsValid: true
+      }
+    ]
+  },
+  UsersResponse: {
+    Status: true,
+    Results: [
+      {
+        Id: u-001,
+        Name: John Doe,
+        Email: john@example.com,
+        Status: active
+      }
+    ],
+    TotalResults: 42
+  }
+}

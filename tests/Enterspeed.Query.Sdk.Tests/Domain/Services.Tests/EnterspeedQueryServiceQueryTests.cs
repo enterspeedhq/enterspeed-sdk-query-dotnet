@@ -17,13 +17,13 @@ using Enterspeed.Query.Sdk.Api.Services;
 using Configuration;
 using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
 using Enterspeed.Query.Sdk.Domain.Models;
-using Enterspeed.Query.Sdk.Domain.QueryApiResponse;
 using Enterspeed.Query.Sdk.Domain.Services;
 using Enterspeed.Query.Sdk.Domain.SystemTextJson;
 using FluentAssertions;
 using Moq;
 using Moq.Protected;
 using Xunit;
+using static VerifyXunit.Verifier;
 
 public class EnterspeedQueryServiceQueryTests
 {
@@ -170,35 +170,27 @@ public class EnterspeedQueryServiceQueryTests
         // Act
         var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
 
-        // Assert - Check HTTP response
+        // Assert - HTTP-level behavior
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Response.Should().NotBeNull();
 
-        // Assert - Retrieve typed product response
+        // Assert - Service behavior
         var productsResponse = response.Get<Product>("products");
         productsResponse.Should().NotBeNull();
         productsResponse.Status.Should().BeTrue("products query should succeed");
 
-        var productsSuccess = productsResponse as ISuccess<Product>;
-        productsSuccess.Should().NotBeNull();
-        productsSuccess?.TotalResults.Should().Be(200);
-        productsSuccess?.Results.Should().HaveCount(2);
-        productsSuccess?.Results[0].Sku.Should().Be("p-5427");
-        productsSuccess?.Results[0].Name.Should().Be("Running shoe");
-        productsSuccess?.Facets.Should().HaveCount(1);
-        productsSuccess?.Facets[0].Name.Should().Be("Categories");
-
-        // Assert - Retrieve typed user response
         var usersResponse = response.Get<User>("users");
         usersResponse.Should().NotBeNull();
         usersResponse.Status.Should().BeTrue("users query should succeed");
 
-        var usersSuccess = usersResponse as ISuccess<User>;
-        usersSuccess.Should().NotBeNull();
-        usersSuccess?.TotalResults.Should().Be(42);
-        usersSuccess?.Results.Should().HaveCount(1);
-        usersSuccess?.Results[0].Name.Should().Be("John Doe");
+        // Assert - Complete data structure with snapshot
+        await Verify(new
+        {
+            ApiResponse = apiResponse,
+            ProductsResponse = productsResponse,
+            UsersResponse = usersResponse
+        });
     }
 
     [Fact]
@@ -265,21 +257,25 @@ public class EnterspeedQueryServiceQueryTests
         // Act
         var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
 
-        // Assert - Products should succeed
+        // Assert - HTTP-level behavior
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Assert - Service behavior - Products should succeed
         var productsResponse = response.Get<Product>("products");
         productsResponse.Status.Should().BeTrue();
 
-        var productsSuccess = productsResponse as ISuccess<Product>;
-        productsSuccess?.Results.Should().HaveCount(1);
-
-        // Assert - Invalid query should fail but not affect products
+        // Assert - Service behavior - Invalid query should fail but not affect products
         var invalidResponse = response.Get<Product>("invalid");
         invalidResponse.Status.Should().BeFalse("invalid query should fail");
 
-        var invalidFailure = invalidResponse as ErrorResponse<Product>;
-        invalidFailure.Should().NotBeNull();
-        invalidFailure?.Errors.Should().NotBeEmpty();
-        invalidFailure?.Errors.Should().Contain(e => e.Message.Contains("Index not found"));
+        // Assert - Complete data structure with snapshot
+        await Verify(new
+        {
+            ApiResponse = apiResponse,
+            ProductsResponse = productsResponse,
+            InvalidResponse = invalidResponse
+        });
     }
 
     [Fact]
@@ -320,11 +316,20 @@ public class EnterspeedQueryServiceQueryTests
         // Act
         var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
 
-        // Assert - Requesting non-existent key returns failure
+        // Assert - HTTP-level behavior
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Assert - Service behavior - Requesting non-existent key returns failure
         var missingResponse = response.Get<Product>("nonexistent");
         missingResponse.Status.Should().BeFalse();
 
-        var failure = missingResponse as ErrorResponse<Product>;
+        // Assert - Complete data structure with snapshot
+        await Verify(new
+        {
+            ApiResponse = apiResponse,
+            MissingResponse = missingResponse
+        });
     }
 
     [Fact]
@@ -527,18 +532,22 @@ public class EnterspeedQueryServiceQueryTests
         var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
         var productsResponse = response.Get<Product>("products");
 
-        // Assert
+        // Assert - HTTP-level behavior
+        response.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Assert - Service behavior
         productsResponse.Status.Should().BeTrue();
         var success = productsResponse as ISuccess<Product>;
-
+        success.Should().NotBeNull();
         success?.Facets.Should().HaveCount(2);
-        success?.Facets[0].Name.Should().Be("Categories");
-        success?.Facets[0].Groups.Should().HaveCount(2);
-        success?.Facets[0].Groups[0].Value.Should().Be("Caps");
-        success?.Facets[0].Groups[0].Count.Should().Be(8);
 
-        success?.Facets[1].Name.Should().Be("Sizes");
-        success?.Facets[1].Groups.Should().HaveCount(3);
+        // Assert - Complete facet data structure with snapshot
+        await Verify(new
+        {
+            ApiResponse = apiResponse,
+            ProductsResponse = productsResponse
+        });
     }
 
     [Fact]
@@ -651,16 +660,17 @@ public class EnterspeedQueryServiceQueryTests
                 .WithPagination(0, 10))
             .Build();
 
-        // Use Query Service to get a single query
+        // Act
         var result = await _queryService.Query(TestApiKey, queryRequest, CancellationToken.None);
 
-        // Assert
+        // Assert - HTTP-level behavior
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(HttpStatusCode.OK);
 
+        // Assert - Service behavior
         result.GetQueryNames().Should().HaveCount(1);
-
         var queryResult = result.Get<object>(name);
+        queryResult.Status.Should().BeTrue();
 
         if (queryResult is ISuccess<object> successResponse)
         {
@@ -670,6 +680,13 @@ public class EnterspeedQueryServiceQueryTests
             successResponse.Facets.Should().HaveCount(1);
             successResponse.Facets[0].Groups.Should().HaveCount(2);
         }
+
+        // Assert - Complete data structure with snapshot
+        await Verify(new
+        {
+            ApiResponse = apiResponse,
+            QueryResult = queryResult
+        });
     }
 
     [Fact]
@@ -714,18 +731,27 @@ public class EnterspeedQueryServiceQueryTests
         // Act
         var result = await _queryService.Query(TestApiKey, queryRequest, CancellationToken.None);
 
-        // Assert - Single query API returns null Response on error, with Message populated
+        // Assert - HTTP-level behavior
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         result.Message.Should().Be("Query is not valid");
-        var resultError = result.Get<object>("products");
 
+        // Assert - Service behavior
+        var resultError = result.Get<object>("products");
         resultError.Should().NotBeAssignableTo<QueryError>();
+        resultError.Status.Should().BeFalse();
 
         if (resultError is IError failure)
         {
             failure.Errors.Should().Contain(e => e.Message.Contains("Query is not valid"));
         }
+
+        // Assert - Complete error data structure with snapshot
+        await Verify(new
+        {
+            ApiResponse = apiResponse,
+            ResultError = resultError
+        });
     }
 
     [Fact]
@@ -780,22 +806,31 @@ public class EnterspeedQueryServiceQueryTests
         // Act
         var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
 
-        // Assert
+        // Assert - HTTP-level behavior
         response.Should().NotBeNull();
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // All queries should fail
+        // Assert - Service behavior - All queries should fail
         var query1Response = response.Get<Product>("query1");
         query1Response.Status.Should().BeFalse();
 
         var query2Response = response.Get<Product>("query2");
         query2Response.Status.Should().BeFalse();
 
+        // Assert - Service behavior - Error details verification
         var query1Failure = query1Response as ErrorResponse<Product>;
         query1Failure?.Errors.Should().Contain(e => e.Message.Contains("Index not found"));
 
         var query2Failure = query2Response as ErrorResponse<Product>;
         query2Failure?.Errors.Should().Contain(e => e.Message.Contains("Permission denied"));
+
+        // Assert - Complete error data structure with snapshot
+        await Verify(new
+        {
+            ApiResponse = apiResponse,
+            Query1Response = query1Response,
+            Query2Response = query2Response
+        });
     }
 
         #endregion

@@ -1,0 +1,16 @@
+﻿{
+  ApiResponse: [
+    {
+      index: product-index,
+      name: products
+    }
+  ],
+  MissingResponse: {
+    Status: false,
+    Errors: [
+      {
+        Message: Query 'nonexistent' not found in response
+      }
+    ]
+  }
+}

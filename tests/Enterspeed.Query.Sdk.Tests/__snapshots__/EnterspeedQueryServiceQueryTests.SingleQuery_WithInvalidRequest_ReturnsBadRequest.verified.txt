@@ -1,0 +1,26 @@
+﻿{
+  ApiResponse: [
+    {
+      name: products,
+      index: product-index,
+      status: 1,
+      message: Query is not valid,
+      errors: [
+        Field not found: invalidField
+      ]
+    }
+  ],
+  ResultError: {
+    Status: false,
+    Errors: [
+      {
+        Index: product-index,
+        Name: products,
+        Message: Query is not valid,
+        Errors: [
+          Field not found: invalidField
+        ]
+      }
+    ]
+  }
+}

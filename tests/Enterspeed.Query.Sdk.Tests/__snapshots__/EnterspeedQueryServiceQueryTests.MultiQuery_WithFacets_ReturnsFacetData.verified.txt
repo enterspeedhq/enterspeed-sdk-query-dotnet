@@ -1,0 +1,85 @@
+﻿{
+  ApiResponse: [
+    {
+      index: product-index,
+      name: products,
+      totalResults: 100,
+      facets: [
+        {
+          name: Categories,
+          field: category,
+          groups: [
+            {
+              value: Caps,
+              count: 8
+            },
+            {
+              value: Hoodies,
+              count: 2
+            }
+          ],
+          isValid: true
+        },
+        {
+          name: Sizes,
+          field: size,
+          groups: [
+            {
+              value: S,
+              count: 15
+            },
+            {
+              value: M,
+              count: 25
+            },
+            {
+              value: L,
+              count: 20
+            }
+          ],
+          isValid: true
+        }
+      ]
+    }
+  ],
+  ProductsResponse: {
+    Status: true,
+    TotalResults: 100,
+    Facets: [
+      {
+        Name: Categories,
+        Field: category,
+        Groups: [
+          {
+            Value: Caps,
+            Count: 8
+          },
+          {
+            Value: Hoodies,
+            Count: 2
+          }
+        ],
+        IsValid: true
+      },
+      {
+        Name: Sizes,
+        Field: size,
+        Groups: [
+          {
+            Value: S,
+            Count: 15
+          },
+          {
+            Value: M,
+            Count: 25
+          },
+          {
+            Value: L,
+            Count: 20
+          }
+        ],
+        IsValid: true
+      }
+    ]
+  }
+}
