@@ -1,0 +1,18 @@
+﻿{
+  Status: true,
+  Results: [
+    {
+      Value: Test1
+    },
+    {
+      Value: Test2
+    }
+  ],
+  TotalResults: 10,
+  Facets: [
+    {
+      Name: category,
+      IsValid: false
+    }
+  ]
+}

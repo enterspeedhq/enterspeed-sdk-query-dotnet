@@ -1,0 +1,12 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        Operator: equals,
+        Value: active,
+        CaseInsensitive: true,
+        Field: status
+      }
+    ]
+  }
+}

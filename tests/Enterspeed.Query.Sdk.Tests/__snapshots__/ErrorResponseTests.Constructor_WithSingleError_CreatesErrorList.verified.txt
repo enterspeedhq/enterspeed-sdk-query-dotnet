@@ -1,0 +1,9 @@
+﻿{
+  Status: false,
+  Errors: [
+    {
+      Index: Single error,
+      Message: ERROR_CODE
+    }
+  ]
+}

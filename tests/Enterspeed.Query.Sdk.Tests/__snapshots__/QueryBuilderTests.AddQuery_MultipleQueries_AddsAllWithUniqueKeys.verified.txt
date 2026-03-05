@@ -1,0 +1,22 @@
+﻿{
+  Queries: [
+    {
+      Index: user-index,
+      Name: users,
+      Pagination: {
+        PageSize: 10
+      }
+    },
+    {
+      Index: product-index,
+      Name: products,
+      Pagination: {
+        PageSize: 5
+      }
+    },
+    {
+      Index: order-index,
+      Name: orders
+    }
+  ]
+}

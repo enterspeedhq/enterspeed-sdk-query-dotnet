@@ -1,0 +1,17 @@
+﻿{
+  Queries: [
+    {
+      Index: test-index,
+      Name: test,
+      Sort: [
+        {
+          Field: name,
+          Order: Asc
+        },
+        {
+          Field: createdAt
+        }
+      ]
+    }
+  ]
+}

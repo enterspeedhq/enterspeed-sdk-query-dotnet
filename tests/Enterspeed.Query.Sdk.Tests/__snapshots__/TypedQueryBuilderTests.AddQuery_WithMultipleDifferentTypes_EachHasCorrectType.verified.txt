@@ -1,0 +1,31 @@
+﻿{
+  Queries: [
+    {
+      Index: product-index,
+      Name: products,
+      Filters: {
+        And: [
+          {
+            Operator: equals,
+            Value: true,
+            CaseInsensitive: false,
+            Field: active
+          }
+        ]
+      }
+    },
+    {
+      Index: product-index,
+      Name: other-products,
+      Filters: {
+        And: [
+          {
+            Operator: greaterThan,
+            Value: 100.0,
+            Field: price
+          }
+        ]
+      }
+    }
+  ]
+}

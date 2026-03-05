@@ -1,0 +1,13 @@
+﻿{
+  Status: false,
+  Errors: [
+    {
+      Index: index1,
+      Message: Error 1
+    },
+    {
+      Index: index2,
+      Message: Error 2
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        And: [
+          {
+            Operator: equals,
+            Value: hoodie,
+            CaseInsensitive: false,
+            Field: title
+          },
+          {
+            Or: [
+              {
+                And: [
+                  {
+                    Operator: equals,
+                    Value: true,
+                    CaseInsensitive: false,
+                    Field: isInStock
+                  },
+                  {
+                    Operator: equals,
+                    Value: true,
+                    CaseInsensitive: false,
+                    Field: allowPreorder
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

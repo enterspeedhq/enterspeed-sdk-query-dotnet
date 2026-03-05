@@ -1,0 +1,84 @@
+﻿{
+  Queries: [
+    {
+      Index: user-index,
+      Name: activeUsers,
+      Filters: {
+        And: [
+          {
+            Operator: equals,
+            Value: true,
+            CaseInsensitive: false,
+            Field: isActive
+          }
+        ]
+      },
+      Aliases: [
+        summary
+      ],
+      Sort: [
+        {
+          Field: lastName,
+          Order: Asc
+        },
+        {
+          Field: firstName,
+          Order: Asc
+        }
+      ],
+      Pagination: {
+        PageSize: 25
+      },
+      Facets: [
+        {
+          Name: role,
+          Field: role,
+          Size: 10
+        }
+      ]
+    },
+    {
+      Index: order-index,
+      Name: recentOrders,
+      Filters: {
+        And: [
+          {
+            And: [
+              {
+                Operator: greaterThan,
+                Value: 2025-01-01,
+                Field: orderDate
+              },
+              {
+                Operator: equals,
+                Value: completed,
+                CaseInsensitive: false,
+                Field: status
+              }
+            ]
+          }
+        ]
+      },
+      Sort: [
+        {
+          Field: orderDate
+        }
+      ],
+      Pagination: {
+        PageSize: 50
+      }
+    },
+    {
+      Index: product-index,
+      Name: popularProducts,
+      Sort: [
+        {
+          Field: viewCount
+        }
+      ],
+      Pagination: {
+        PageSize: 10
+      }
+    }
+  ]
+}

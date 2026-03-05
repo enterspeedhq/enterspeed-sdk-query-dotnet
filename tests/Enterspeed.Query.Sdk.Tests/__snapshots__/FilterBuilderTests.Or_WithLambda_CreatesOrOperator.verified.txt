@@ -1,0 +1,22 @@
+﻿[
+  {
+    Or: [
+      {
+        And: [
+          {
+            Operator: equals,
+            Value: active,
+            CaseInsensitive: false,
+            Field: status
+          },
+          {
+            Operator: equals,
+            Value: pending,
+            CaseInsensitive: false,
+            Field: status
+          }
+        ]
+      }
+    ]
+  }
+]

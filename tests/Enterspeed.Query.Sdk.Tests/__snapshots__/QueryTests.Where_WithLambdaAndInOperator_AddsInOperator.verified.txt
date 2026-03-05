@@ -1,0 +1,15 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        Operator: in,
+        Value: [
+          electronics,
+          computers,
+          phones
+        ],
+        Field: category
+      }
+    ]
+  }
+}

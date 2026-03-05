@@ -1,0 +1,4 @@
+﻿{
+  Message: Test message,
+  Code: TEST_CODE
+}

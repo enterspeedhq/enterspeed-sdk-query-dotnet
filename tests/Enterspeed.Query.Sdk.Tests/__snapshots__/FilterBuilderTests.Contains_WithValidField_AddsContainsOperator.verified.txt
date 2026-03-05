@@ -1,0 +1,8 @@
+﻿[
+  {
+    Operator: contains,
+    Value: *premium*,
+    CaseInsensitive: false,
+    Field: description
+  }
+]

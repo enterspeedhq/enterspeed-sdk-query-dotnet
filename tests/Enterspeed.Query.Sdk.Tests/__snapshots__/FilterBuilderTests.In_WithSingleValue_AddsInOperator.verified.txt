@@ -1,0 +1,9 @@
+﻿[
+  {
+    Operator: in,
+    Value: [
+      premium
+    ],
+    Field: type
+  }
+]

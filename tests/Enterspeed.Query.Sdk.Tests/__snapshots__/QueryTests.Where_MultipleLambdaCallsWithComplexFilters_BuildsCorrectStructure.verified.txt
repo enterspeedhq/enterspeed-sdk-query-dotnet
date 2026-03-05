@@ -1,0 +1,47 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        And: [
+          {
+            Operator: equals,
+            Value: active,
+            CaseInsensitive: false,
+            Field: status
+          },
+          {
+            Operator: greaterThan,
+            Value: 18,
+            Field: age
+          }
+        ]
+      },
+      {
+        Or: [
+          {
+            And: [
+              {
+                Operator: equals,
+                Value: admin,
+                CaseInsensitive: false,
+                Field: role
+              },
+              {
+                Operator: equals,
+                Value: moderator,
+                CaseInsensitive: false,
+                Field: role
+              }
+            ]
+          }
+        ]
+      },
+      {
+        Operator: notEquals,
+        Value: true,
+        CaseInsensitive: false,
+        Field: banned
+      }
+    ]
+  }
+}

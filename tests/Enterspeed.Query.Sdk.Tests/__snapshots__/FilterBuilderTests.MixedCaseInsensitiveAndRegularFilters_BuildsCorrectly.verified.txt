@@ -1,0 +1,23 @@
+﻿[
+  {
+    And: [
+      {
+        Operator: equals,
+        Value: active,
+        CaseInsensitive: true,
+        Field: status
+      },
+      {
+        Operator: contains,
+        Value: *hoodie*,
+        CaseInsensitive: true,
+        Field: title
+      },
+      {
+        Operator: greaterThan,
+        Value: 50,
+        Field: price
+      }
+    ]
+  }
+]

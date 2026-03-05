@@ -1,0 +1,8 @@
+﻿[
+  {
+    Operator: equals,
+    Value: true,
+    CaseInsensitive: false,
+    Field: active
+  }
+]

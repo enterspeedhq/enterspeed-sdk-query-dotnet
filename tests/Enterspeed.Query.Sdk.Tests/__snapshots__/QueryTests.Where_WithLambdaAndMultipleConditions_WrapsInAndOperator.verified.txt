@@ -1,0 +1,21 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        And: [
+          {
+            Operator: equals,
+            Value: active,
+            CaseInsensitive: false,
+            Field: status
+          },
+          {
+            Operator: greaterThan,
+            Value: 18,
+            Field: age
+          }
+        ]
+      }
+    ]
+  }
+}

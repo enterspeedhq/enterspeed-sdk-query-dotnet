@@ -1,15 +1,15 @@
-﻿using Enterspeed.Query.Sdk.Api.Models;
-using Enterspeed.Query.Sdk.Api.Providers;
+﻿using Enterspeed.Query.Sdk.Api.Providers;
 using Enterspeed.Query.Sdk.Api.Services;
-using Enterspeed.Query.Sdk.Domain.Connection;
-using Enterspeed.Query.Sdk.Domain.Models;
 using System;
 using System.Collections.Generic;
-using System.Net;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Enterspeed.Query.Sdk.Api.Models.Response;
+using Enterspeed.Query.Sdk.Domain.Builders.MultiQuery;
+using Enterspeed.Query.Sdk.Domain.QueryApiResponse.Query;
 
 namespace Enterspeed.Query.Sdk.Domain.Services
 {
@@ -18,132 +18,95 @@ namespace Enterspeed.Query.Sdk.Domain.Services
         private readonly IJsonSerializer _serializer;
 
         public EnterspeedQueryService(
-            EnterspeedQueryConnection enterspeedQueryConnection,
+            HttpClient httpClient,
             IEnterspeedQueryConfigurationProvider queryConfigurationProvider,
             IJsonSerializer jsonSerializer)
-            : base(enterspeedQueryConnection, queryConfigurationProvider)
+            : base(httpClient, queryConfigurationProvider)
         {
             _serializer = jsonSerializer ?? throw new ArgumentNullException(nameof(jsonSerializer));
         }
 
-        public async Task<QueryApiResponse> Query(string apiKey, string index, QueryObject query, CancellationToken? cancellationToken = null)
-        {
-            Validate(apiKey);
-
-            var requestUri = RequestUri(index);
-
-            var httpContent = new StringContent(_serializer.Serialize(query), Encoding.UTF8, "application/json");
-            return await QueryApiResponseSingle(apiKey, requestUri, httpContent, cancellationToken);
-        }
-
-        public async Task<QueryApiResponse<IContent>> QueryTyped(string apiKey, string index, QueryObject query, CancellationToken? cancellationToken = null)
-        {
-            Validate(apiKey);
-
-            var requestUri = RequestUri(index);
-
-            var httpContent = new StringContent(_serializer.Serialize(query), Encoding.UTF8, "application/json");
-            return await QueryApiResponseTypedSingle(apiKey, requestUri, httpContent, cancellationToken);
-        }
-
-        public async Task<MultiQueryApiResponse> Query(string apiKey, List<MultiQueryObject> queries, CancellationToken? cancellationToken = null)
+        public async Task<Api.Models.Response.QueryApiResponse> Query(
+            string apiKey,
+            QueryRequest queries,
+            CancellationToken? cancellationToken = null)
         {
             Validate(apiKey);
 
             var requestUri = RequestUri();
 
-            var httpContent = new StringContent(_serializer.Serialize(queries), Encoding.UTF8, "application/json");
+            var httpContent = new StringContent(_serializer.Serialize(queries.Queries), Encoding.UTF8, "application/json");
+
             return await QueryApiResponseMultiple(apiKey, requestUri, httpContent, cancellationToken);
         }
 
-        public async Task<MultiQueryApiResponse<IContent>> QueryTyped(string apiKey, List<MultiQueryObject> queries, CancellationToken? cancellationToken = null)
+        private async Task<Api.Models.Response.QueryApiResponse> QueryApiResponseMultiple(string apiKey, Uri requestUri,
+                                                                                          HttpContent content, CancellationToken? cancellationToken = null)
         {
-            Validate(apiKey);
-
-            var requestUri = RequestUri();
-
-            var httpContent = new StringContent(_serializer.Serialize(queries), Encoding.UTF8, "application/json");
-            return await QueryApiResponseTypedMultiple(apiKey, requestUri, httpContent, cancellationToken);
-        }
-
-        private async Task<QueryApiResponse<IContent>> QueryApiResponseTypedSingle(string apiKey, Uri requestUri, HttpContent content, CancellationToken? cancellationToken = null)
-        {
-            content.Headers.Add("X-Api-Key", apiKey);
-
-            var response = await PostAsync(requestUri, content, cancellationToken);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            return new QueryApiResponse<IContent>
+            try
             {
-                StatusCode = response.StatusCode,
-                Message = response.StatusCode != HttpStatusCode.OK && !string.IsNullOrWhiteSpace(responseString)
-                    ? _serializer.Deserialize<QueryApiError>(responseString)?.Message
-                    : null,
-                Response = response.StatusCode == HttpStatusCode.OK
-                    ? _serializer.Deserialize<QueryResponse<IContent>>(responseString)
-                    : null,
-                Headers = response.Headers
-            };
-        }
+                content.Headers.Add("X-Api-Key", apiKey);
+                var httpResponse = await PostAsync(requestUri, content, cancellationToken);
+                var responseString = await httpResponse.Content.ReadAsStringAsync();
 
-        private async Task<MultiQueryApiResponse<IContent>> QueryApiResponseTypedMultiple(string apiKey, Uri requestUri, HttpContent content, CancellationToken? cancellationToken = null)
-        {
-            content.Headers.Add("X-Api-Key", apiKey);
+                // Deserialize the response - works for both OK (mixed responses) and BadRequest (all errors)
+                var response = _serializer.Deserialize<List<QueryResponse>>(responseString);
 
-            var response = await PostAsync(requestUri, content, cancellationToken);
-            var responseString = await response.Content.ReadAsStringAsync();
+                // Convert to SDK response type using extension method
+                var convertedResponses = response.ToQueryResponse();
 
-            return new MultiQueryApiResponse<IContent>
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    // Extract error messages from all error responses
+                    var errorMessages = response
+                        .OfType<QueryResponseError>()
+                        .Select(r => r.Message)
+                        .Where(m => !string.IsNullOrEmpty(m))
+                        .ToList();
+
+                    var message = errorMessages.Any()
+                        ? errorMessages.First() // Use first error message for the main message
+                        : "All queries failed";
+
+                    return new Api.Models.Response.QueryApiResponse(_serializer)
+                    {
+                        StatusCode = httpResponse.StatusCode,
+                        Headers = httpResponse.Headers,
+                        Message = message,
+                        Response = convertedResponses
+                    };
+                }
+
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    return new Api.Models.Response.QueryApiResponse(_serializer)
+                    {
+                        StatusCode = httpResponse.StatusCode,
+                        Headers = httpResponse.Headers,
+                        Message = "", // Empty message for successful responses
+                        Response = convertedResponses
+                    };
+                }
+
+                // Handle other HTTP status codes
+                return new Api.Models.Response.QueryApiResponse(_serializer)
+                {
+                    StatusCode = httpResponse.StatusCode,
+                    Headers = httpResponse.Headers,
+                    Message = $"Unexpected status code: {httpResponse.StatusCode}",
+                    Response = convertedResponses
+                };
+
+            }
+            catch (Exception ex)
             {
-                StatusCode = response.StatusCode,
-                Message = response.StatusCode != HttpStatusCode.OK && !string.IsNullOrWhiteSpace(responseString)
-                    ? _serializer.Deserialize<QueryApiError>(responseString)?.Message
-                    : null,
-                Response = response.StatusCode == HttpStatusCode.OK
-                    ? _serializer.Deserialize<List<MultiQueryResponse<IContent>>>(responseString)
-                    : null,
-                Headers = response.Headers
-            };
-        }
-
-        private async Task<QueryApiResponse> QueryApiResponseSingle(string apiKey, Uri requestUri, HttpContent content, CancellationToken? cancellationToken = null)
-        {
-            content.Headers.Add("X-Api-Key", apiKey);
-            
-            var response = await PostAsync(requestUri, content, cancellationToken);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            return new QueryApiResponse
-            {
-                StatusCode = response.StatusCode,
-                Message = response.StatusCode != HttpStatusCode.OK && !string.IsNullOrWhiteSpace(responseString)
-                    ? _serializer.Deserialize<QueryApiError>(responseString)?.Message
-                    : null,
-                Response = response.StatusCode == HttpStatusCode.OK
-                    ? _serializer.Deserialize<QueryResponse>(responseString)
-                    : null,
-                Headers = response.Headers
-            };
-        }
-
-        private async Task<MultiQueryApiResponse> QueryApiResponseMultiple(string apiKey, Uri requestUri, HttpContent content, CancellationToken? cancellationToken = null)
-        {
-            content.Headers.Add("X-Api-Key", apiKey);
-
-            var response = await PostAsync(requestUri, content, cancellationToken);
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            return new MultiQueryApiResponse
-            {
-                StatusCode = response.StatusCode,
-                Message = response.StatusCode != HttpStatusCode.OK && !string.IsNullOrWhiteSpace(responseString)
-                    ? _serializer.Deserialize<QueryApiError>(responseString)?.Message
-                    : null,
-                Response = response.StatusCode == HttpStatusCode.OK
-                    ? _serializer.Deserialize<List<MultiQueryResponse>>(responseString)
-                    : null,
-                Headers = response.Headers
-            };
+                return new Api.Models.Response.QueryApiResponse
+                {
+                    StatusCode = System.Net.HttpStatusCode.BadRequest,
+                    Message = $"Failed to deserialize multi query response: {ex.Message}",
+                    Response = null
+                };
+            }
         }
     }
 }

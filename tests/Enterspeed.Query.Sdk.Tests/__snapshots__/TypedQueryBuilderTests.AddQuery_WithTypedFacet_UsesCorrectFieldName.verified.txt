@@ -1,0 +1,15 @@
+﻿{
+  Queries: [
+    {
+      Index: product-index,
+      Name: products,
+      Facets: [
+        {
+          Name: departmentFacet,
+          Field: department,
+          Size: 10
+        }
+      ]
+    }
+  ]
+}
