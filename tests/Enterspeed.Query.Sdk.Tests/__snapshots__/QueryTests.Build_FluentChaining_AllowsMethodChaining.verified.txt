@@ -1,0 +1,20 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        Operator: equals,
+        Value: true,
+        CaseInsensitive: false,
+        Field: active
+      }
+    ]
+  },
+  Sort: [
+    {
+      Field: updatedAt
+    }
+  ],
+  Pagination: {
+    PageSize: 5
+  }
+}

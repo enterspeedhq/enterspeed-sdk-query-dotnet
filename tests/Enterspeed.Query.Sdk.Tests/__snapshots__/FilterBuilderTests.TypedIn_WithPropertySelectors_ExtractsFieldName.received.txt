@@ -1,0 +1,11 @@
+﻿[
+  {
+    Operator: in,
+    Value: [
+      Clothing,
+      Shoes,
+      Accessories
+    ],
+    Field: department
+  }
+]

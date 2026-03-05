@@ -1,0 +1,15 @@
+﻿{
+  Queries: [
+    {
+      Index: test-index,
+      Name: test,
+      Facets: [
+        {
+          Name: categoryFacet,
+          Field: category,
+          Size: 25
+        }
+      ]
+    }
+  ]
+}

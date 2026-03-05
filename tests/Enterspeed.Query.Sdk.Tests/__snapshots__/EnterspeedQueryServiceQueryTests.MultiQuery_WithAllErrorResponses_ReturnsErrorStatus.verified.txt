@@ -1,0 +1,48 @@
+﻿{
+  ApiResponse: [
+    {
+      index: invalid-index-1,
+      name: query1,
+      status: 1,
+      message: Index not found,
+      errors: [
+        The specified index 'invalid-index-1' does not exist
+      ]
+    },
+    {
+      index: invalid-index-2,
+      name: query2,
+      status: 1,
+      message: Permission denied,
+      errors: [
+        You don't have permission to access this index
+      ]
+    }
+  ],
+  Query1Response: {
+    Status: false,
+    Errors: [
+      {
+        Index: invalid-index-1,
+        Name: query1,
+        Message: Index not found,
+        Errors: [
+          The specified index 'invalid-index-1' does not exist
+        ]
+      }
+    ]
+  },
+  Query2Response: {
+    Status: false,
+    Errors: [
+      {
+        Index: invalid-index-2,
+        Name: query2,
+        Message: Permission denied,
+        Errors: [
+          You don't have permission to access this index
+        ]
+      }
+    ]
+  }
+}

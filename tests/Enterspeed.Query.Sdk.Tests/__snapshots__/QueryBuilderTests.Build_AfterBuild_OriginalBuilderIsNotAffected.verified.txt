@@ -1,0 +1,22 @@
+﻿{
+  request1: {
+    Queries: [
+      {
+        Index: user-index,
+        Name: users
+      }
+    ]
+  },
+  request2: {
+    Queries: [
+      {
+        Index: user-index,
+        Name: users
+      },
+      {
+        Index: product-index,
+        Name: products
+      }
+    ]
+  }
+}

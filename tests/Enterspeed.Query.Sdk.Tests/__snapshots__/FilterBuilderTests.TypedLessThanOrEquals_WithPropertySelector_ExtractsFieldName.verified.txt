@@ -1,0 +1,7 @@
+﻿[
+  {
+    Operator: lessThanOrEquals,
+    Value: 200.0,
+    Field: price
+  }
+]

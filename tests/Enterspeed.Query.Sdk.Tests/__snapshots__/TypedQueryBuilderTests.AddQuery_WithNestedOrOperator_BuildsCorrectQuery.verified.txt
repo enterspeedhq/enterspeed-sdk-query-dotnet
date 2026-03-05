@@ -1,0 +1,42 @@
+﻿{
+  Queries: [
+    {
+      Index: product-index,
+      Name: products,
+      Filters: {
+        And: [
+          {
+            And: [
+              {
+                Operator: equals,
+                Value: true,
+                CaseInsensitive: false,
+                Field: active
+              },
+              {
+                Or: [
+                  {
+                    And: [
+                      {
+                        Operator: equals,
+                        Value: Electronics,
+                        CaseInsensitive: false,
+                        Field: department
+                      },
+                      {
+                        Operator: equals,
+                        Value: Computers,
+                        CaseInsensitive: false,
+                        Field: department
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

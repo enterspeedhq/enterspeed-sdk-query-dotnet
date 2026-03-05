@@ -1,0 +1,55 @@
+﻿{
+  ApiResponse: [
+    {
+      index: product-index,
+      name: products,
+      totalResults: 5,
+      results: [
+        {
+          sku: p-001,
+          name: Test Product,
+          url: /products/test/,
+          originId: p-001,
+          sourceGuid: test-guid,
+          updatedAt: DateTimeOffset_1
+        }
+      ]
+    },
+    {
+      index: invalid-index,
+      name: invalid,
+      status: 1,
+      message: Index not found,
+      errors: [
+        The specified index does not exist
+      ]
+    }
+  ],
+  ProductsResponse: {
+    Status: true,
+    Results: [
+      {
+        Sku: p-001,
+        Name: Test Product,
+        Url: /products/test/,
+        OriginId: p-001,
+        SourceGuid: test-guid,
+        UpdatedAt: DateTime_1
+      }
+    ],
+    TotalResults: 5
+  },
+  InvalidResponse: {
+    Status: false,
+    Errors: [
+      {
+        Index: invalid-index,
+        Name: invalid,
+        Message: Index not found,
+        Errors: [
+          The specified index does not exist
+        ]
+      }
+    ]
+  }
+}

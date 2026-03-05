@@ -1,0 +1,56 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        And: [
+          {
+            Operator: equals,
+            Value: active,
+            CaseInsensitive: false,
+            Field: status
+          },
+          {
+            Operator: notEquals,
+            Value: guest,
+            CaseInsensitive: false,
+            Field: role
+          },
+          {
+            Operator: greaterThan,
+            Value: 18,
+            Field: age
+          },
+          {
+            Operator: greaterThanOrEquals,
+            Value: 75,
+            Field: score
+          },
+          {
+            Operator: lessThan,
+            Value: 3,
+            Field: failedAttempts
+          },
+          {
+            Operator: lessThanOrEquals,
+            Value: 50,
+            Field: discount
+          },
+          {
+            Operator: contains,
+            Value: *premium*,
+            CaseInsensitive: false,
+            Field: description
+          },
+          {
+            Operator: in,
+            Value: [
+              electronics,
+              computers
+            ],
+            Field: category
+          }
+        ]
+      }
+    ]
+  }
+}

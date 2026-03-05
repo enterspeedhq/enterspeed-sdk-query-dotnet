@@ -1,0 +1,16 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        Operator: equals,
+        Value: true,
+        CaseInsensitive: false,
+        Field: isFeatured
+      }
+    ]
+  },
+  Aliases: [
+    tile,
+    detail
+  ]
+}

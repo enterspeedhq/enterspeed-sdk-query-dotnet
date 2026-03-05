@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
+﻿﻿#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -11,7 +11,7 @@ namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
     {
         private readonly JsonSerializerOptions _options = new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
 
         public SystemTextJsonSerializer(IList<JsonConverter> converters = null)
@@ -25,8 +25,10 @@ namespace Enterspeed.Query.Sdk.Domain.SystemTextJson
             }
             else
             {
-                _options.Converters.Add(new ContentConverter());
+                // Default converters when none provided
                 _options.Converters.Add(new FilterConverter());
+                _options.Converters.Add(new SortOrderJsonConverter());
+                _options.Converters.Add(new QueryResponseConverter());
             }
         }
 

@@ -1,0 +1,12 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        Operator: contains,
+        Value: *premium*,
+        CaseInsensitive: true,
+        Field: description
+      }
+    ]
+  }
+}

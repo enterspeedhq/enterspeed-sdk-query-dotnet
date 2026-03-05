@@ -1,0 +1,30 @@
+﻿{
+  Queries: [
+    {
+      Index: product-index,
+      Name: products,
+      Filters: {
+        And: [
+          {
+            Operator: equals,
+            Value: true,
+            CaseInsensitive: false,
+            Field: active
+          }
+        ]
+      },
+      Sort: [
+        {
+          Field: updatedAt
+        }
+      ],
+      Facets: [
+        {
+          Name: department,
+          Field: department,
+          Size: 10
+        }
+      ]
+    }
+  ]
+}

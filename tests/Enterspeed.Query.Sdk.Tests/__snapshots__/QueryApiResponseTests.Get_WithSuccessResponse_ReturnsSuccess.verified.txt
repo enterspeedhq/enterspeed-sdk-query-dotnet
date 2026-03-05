@@ -1,0 +1,16 @@
+﻿{
+  Status: true,
+  Results: [
+    {
+      Title: Book 1,
+      Author: Author 1,
+      Year: 2021
+    },
+    {
+      Title: Book 2,
+      Author: Author 2,
+      Year: 2022
+    }
+  ],
+  TotalResults: 2
+}

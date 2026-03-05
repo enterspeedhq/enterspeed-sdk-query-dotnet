@@ -1,0 +1,18 @@
+﻿{
+  Queries: [
+    {
+      Index: test-index,
+      Name: test,
+      Filters: {
+        And: [
+          {
+            Operator: equals,
+            Value: active,
+            CaseInsensitive: false,
+            Field: status
+          }
+        ]
+      }
+    }
+  ]
+}

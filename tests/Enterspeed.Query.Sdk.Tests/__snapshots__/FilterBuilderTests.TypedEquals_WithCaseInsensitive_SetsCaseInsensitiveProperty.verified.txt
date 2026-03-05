@@ -1,0 +1,8 @@
+﻿[
+  {
+    Operator: equals,
+    Value: Hoodie,
+    CaseInsensitive: true,
+    Field: name
+  }
+]

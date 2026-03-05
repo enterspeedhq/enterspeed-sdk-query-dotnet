@@ -1,0 +1,8 @@
+﻿{
+  Status: false,
+  Errors: [
+    {
+      Message: Test error message
+    }
+  ]
+}

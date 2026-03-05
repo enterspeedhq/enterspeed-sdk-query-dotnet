@@ -1,0 +1,50 @@
+﻿{
+  Queries: [
+    {
+      Index: user-index,
+      Name: users,
+      Filters: {
+        And: [
+          {
+            Operator: equals,
+            Value: true,
+            CaseInsensitive: false,
+            Field: active
+          }
+        ]
+      },
+      Sort: [
+        {
+          Field: updatedAt
+        }
+      ],
+      Pagination: {
+        PageSize: 10
+      },
+      Facets: [
+        {
+          Name: department,
+          Field: department,
+          Size: 10
+        }
+      ]
+    },
+    {
+      Index: product-index,
+      Name: products,
+      Aliases: [
+        title,
+        detail
+      ],
+      Sort: [
+        {
+          Field: price,
+          Order: Asc
+        }
+      ],
+      Pagination: {
+        PageSize: 20
+      }
+    }
+  ]
+}

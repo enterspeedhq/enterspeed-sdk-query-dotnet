@@ -1,0 +1,20 @@
+﻿[
+  {
+    And: [
+      {
+        And: [
+          {
+            Operator: greaterThan,
+            Value: 100,
+            Field: price
+          },
+          {
+            Operator: lessThan,
+            Value: 200,
+            Field: price
+          }
+        ]
+      }
+    ]
+  }
+]

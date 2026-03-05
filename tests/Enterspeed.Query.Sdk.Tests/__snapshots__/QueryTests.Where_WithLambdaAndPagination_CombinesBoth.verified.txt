@@ -1,0 +1,21 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        Operator: equals,
+        Value: active,
+        CaseInsensitive: false,
+        Field: status
+      }
+    ]
+  },
+  Sort: [
+    {
+      Field: name,
+      Order: Asc
+    }
+  ],
+  Pagination: {
+    PageSize: 10
+  }
+}

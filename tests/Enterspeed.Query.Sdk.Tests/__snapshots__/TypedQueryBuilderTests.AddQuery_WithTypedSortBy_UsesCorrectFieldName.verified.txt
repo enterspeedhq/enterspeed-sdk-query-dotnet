@@ -1,0 +1,14 @@
+﻿{
+  Queries: [
+    {
+      Index: product-index,
+      Name: products,
+      Sort: [
+        {
+          Field: price,
+          Order: Asc
+        }
+      ]
+    }
+  ]
+}

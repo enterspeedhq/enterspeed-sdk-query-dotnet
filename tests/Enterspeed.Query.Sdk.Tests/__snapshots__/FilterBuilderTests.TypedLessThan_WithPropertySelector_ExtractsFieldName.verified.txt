@@ -1,0 +1,7 @@
+﻿[
+  {
+    Operator: lessThan,
+    Value: 50,
+    Field: stock
+  }
+]

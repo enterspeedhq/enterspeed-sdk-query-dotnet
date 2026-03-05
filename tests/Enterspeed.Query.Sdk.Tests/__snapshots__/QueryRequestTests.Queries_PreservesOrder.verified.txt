@@ -1,0 +1,16 @@
+﻿{
+  Queries: [
+    {
+      Index: index1,
+      Name: first
+    },
+    {
+      Index: index2,
+      Name: second
+    },
+    {
+      Index: index3,
+      Name: third
+    }
+  ]
+}

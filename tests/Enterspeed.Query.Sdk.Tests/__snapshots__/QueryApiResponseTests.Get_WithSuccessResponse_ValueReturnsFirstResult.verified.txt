@@ -1,0 +1,5 @@
+﻿{
+  Title: First Book,
+  Author: First Author,
+  Year: 2021
+}

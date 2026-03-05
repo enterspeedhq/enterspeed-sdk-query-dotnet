@@ -1,0 +1,8 @@
+﻿[
+  {
+    Operator: contains,
+    Value: *shirt*,
+    CaseInsensitive: false,
+    Field: name
+  }
+]

@@ -1,0 +1,65 @@
+﻿{
+  ApiResponse: [
+    {
+      name: products,
+      index: product-index,
+      totalResults: 2,
+      results: [
+        {
+          name: Product 1,
+          sku: p-001
+        },
+        {
+          name: Product 2,
+          sku: p-002
+        }
+      ],
+      facets: [
+        {
+          name: Categories,
+          field: category,
+          isValid: true,
+          groups: [
+            {
+              value: Electronics,
+              count: 15
+            },
+            {
+              value: Books,
+              count: 8
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  QueryResult: {
+    Status: true,
+    Results: [
+      {
+        ValueKind: Object
+      },
+      {
+        ValueKind: Object
+      }
+    ],
+    TotalResults: 2,
+    Facets: [
+      {
+        Name: Categories,
+        Field: category,
+        Groups: [
+          {
+            Value: Electronics,
+            Count: 15
+          },
+          {
+            Value: Books,
+            Count: 8
+          }
+        ],
+        IsValid: true
+      }
+    ]
+  }
+}

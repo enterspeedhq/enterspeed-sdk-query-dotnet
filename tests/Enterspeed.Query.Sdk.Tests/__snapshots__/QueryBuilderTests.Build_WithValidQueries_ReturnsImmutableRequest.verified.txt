@@ -1,0 +1,11 @@
+﻿{
+  Queries: [
+    {
+      Index: user-index,
+      Name: users,
+      Pagination: {
+        PageSize: 10
+      }
+    }
+  ]
+}
