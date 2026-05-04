@@ -35,6 +35,12 @@ public class QueriesTypedController : Controller
 
         var response = await _enterspeedQueryService.Query(ApiKey, request, CancellationToken.None);
 
+        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            Console.WriteLine($"Multi-query request failed with status code: {response.StatusCode}");
+            return StatusCode((int)response.StatusCode, "Insufficient scope for accessing indices for current api-key");
+        }
+
         if (response.StatusCode != System.Net.HttpStatusCode.OK)
         {
             Console.WriteLine($"Multi-query request failed with status code: {response.StatusCode}");
@@ -90,6 +96,12 @@ public class QueriesTypedController : Controller
         // Execute the multi-query request and get the response
         // Here we will only get some good request to show how we can handle the response both for errors and success
         var response = await _enterspeedQueryService.Query(ApiKey, request, CancellationToken.None);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            Console.WriteLine($"Multi-query request failed with status code: {response.StatusCode}");
+            return StatusCode((int)response.StatusCode, "Insufficient scope for accessing indices for current api-key");
+        }
 
         if (response.StatusCode != System.Net.HttpStatusCode.OK)
         {

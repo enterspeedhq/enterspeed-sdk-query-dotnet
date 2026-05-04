@@ -579,7 +579,168 @@ public class EnterspeedQueryServiceQueryTests
         names.Should().BeEmpty();
     }
 
-        #region Single Query Tests
+    #region Forbidden Tests
+
+    [Fact]
+    public async Task Query_WithForbiddenApiKey_ReturnsForbiddenStatusCode()
+    {
+        // Arrange - API returns 403 when the API key has no Query scope
+        var responseJson = _serializer.Serialize(new { error = "Forbidden" });
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Forbidden,
+                Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
+            });
+
+        var request = new QueryBuilder()
+            .AddQuery("products", "product-index", builder => builder.WithPagination(0, 10))
+            .Build();
+
+        // Act
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.Message.Should().Be("Forbidden");
+        response.Response.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task MultiQuery_WithForbiddenBatchItem_IsForbiddenReturnsTrue()
+    {
+        // Arrange - API returns 200 with one forbidden item and one success item
+        var request = new QueryBuilder()
+            .AddQuery("products", "product-index", builder => builder.WithPagination(0, 10))
+            .AddQuery("restricted", "restricted-index", builder => builder.WithPagination(0, 10))
+            .Build();
+
+        var apiResponse = new List<object>
+        {
+            new
+            {
+                index = "product-index",
+                name = "products",
+                totalResults = 1,
+                status = 0,
+                results = new[]
+                {
+                    new
+                    {
+                        sku = "p-001",
+                        name = "Test Product",
+                        url = "/products/test/",
+                        originId = "p-001",
+                        sourceGuid = "test-guid",
+                        updatedAt = "2025-01-01T00:00:00Z"
+                    }
+                },
+                facets = Array.Empty<object>()
+            },
+            new
+            {
+                index = "restricted-index",
+                name = "restricted",
+                status = 1,
+                message = "Forbidden",
+                errors = new[] { "Forbidden" }
+            }
+        };
+
+        var responseJson = _serializer.Serialize(apiResponse);
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
+            });
+
+        // Act
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
+
+        // Assert - HTTP-level
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Assert - Successful query is unaffected
+        var productsResult = response.Get<Product>("products");
+        productsResult.Status.Should().BeTrue();
+
+        // Assert - Forbidden item is an error with IsForbidden true
+        var restrictedResult = response.Get<Product>("restricted");
+        restrictedResult.Status.Should().BeFalse();
+        var restrictedError = restrictedResult as IError;
+        restrictedError.Should().NotBeNull();
+        restrictedError!.IsForbidden().Should().BeTrue();
+
+        // Assert - Complete data structure with snapshot
+        await Verify(new
+        {
+            ApiResponse = apiResponse,
+            ProductsResponse = productsResult,
+            RestrictedResponse = restrictedResult
+        });
+    }
+
+    [Fact]
+    public async Task MultiQuery_WithRegularError_IsForbiddenReturnsFalse()
+    {
+        // Arrange - A regular error (e.g. index not found) should not be flagged as forbidden
+        var request = new QueryBuilder()
+            .AddQuery("missing", "missing-index", builder => builder.WithPagination(0, 10))
+            .Build();
+
+        var apiResponse = new List<object>
+        {
+            new
+            {
+                index = "missing-index",
+                name = "missing",
+                status = 1,
+                message = "Index not found",
+                errors = new[] { "The specified index does not exist" }
+            }
+        };
+
+        var responseJson = _serializer.Serialize(apiResponse);
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseJson, Encoding.UTF8, MediaTypeNames.Application.Json)
+            });
+
+        // Act
+        var response = await _queryService.Query(TestApiKey, request, CancellationToken.None);
+
+        // Assert
+        var missingResult = response.Get<Product>("missing");
+        missingResult.Status.Should().BeFalse();
+        var missingError = missingResult as IError;
+        missingError.Should().NotBeNull();
+        missingError!.IsForbidden().Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Single Query Tests
 
     [Fact]
     public async Task SingleQuery_WithValidRequest_ReturnsSuccess()
@@ -833,5 +994,5 @@ public class EnterspeedQueryServiceQueryTests
         });
     }
 
-        #endregion
+    #endregion
 }
