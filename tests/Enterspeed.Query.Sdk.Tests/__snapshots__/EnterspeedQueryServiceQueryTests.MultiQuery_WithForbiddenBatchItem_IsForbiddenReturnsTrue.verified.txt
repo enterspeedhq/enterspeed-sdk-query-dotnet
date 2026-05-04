@@ -1,0 +1,55 @@
+﻿{
+  ApiResponse: [
+    {
+      index: product-index,
+      name: products,
+      totalResults: 1,
+      results: [
+        {
+          sku: p-001,
+          name: Test Product,
+          url: /products/test/,
+          originId: p-001,
+          sourceGuid: test-guid,
+          updatedAt: DateTimeOffset_1
+        }
+      ]
+    },
+    {
+      index: restricted-index,
+      name: restricted,
+      status: 1,
+      message: Forbidden,
+      errors: [
+        Forbidden
+      ]
+    }
+  ],
+  ProductsResponse: {
+    Status: true,
+    Results: [
+      {
+        Sku: p-001,
+        Name: Test Product,
+        Url: /products/test/,
+        OriginId: p-001,
+        SourceGuid: test-guid,
+        UpdatedAt: DateTime_1
+      }
+    ],
+    TotalResults: 1
+  },
+  RestrictedResponse: {
+    Status: false,
+    Errors: [
+      {
+        Index: restricted-index,
+        Name: restricted,
+        Message: Forbidden,
+        Errors: [
+          Forbidden
+        ]
+      }
+    ]
+  }
+}

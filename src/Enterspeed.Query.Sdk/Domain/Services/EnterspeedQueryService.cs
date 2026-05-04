@@ -3,6 +3,7 @@ using Enterspeed.Query.Sdk.Api.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -48,6 +49,18 @@ namespace Enterspeed.Query.Sdk.Domain.Services
                 content.Headers.Add("X-Api-Key", apiKey);
                 var httpResponse = await PostAsync(requestUri, content, cancellationToken);
                 var responseString = await httpResponse.Content.ReadAsStringAsync();
+
+                if (httpResponse.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    var forbiddenBody = _serializer.Deserialize<ForbiddenApiResponse>(responseString);
+                    return new Api.Models.Response.QueryApiResponse(_serializer)
+                    {
+                        StatusCode = httpResponse.StatusCode,
+                        Headers = httpResponse.Headers,
+                        Message = forbiddenBody?.Error ?? "Forbidden",
+                        Response = null
+                    };
+                }
 
                 // Deserialize the response - works for both OK (mixed responses) and BadRequest (all errors)
                 var response = _serializer.Deserialize<List<QueryResponse>>(responseString);
