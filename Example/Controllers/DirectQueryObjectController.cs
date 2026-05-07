@@ -70,6 +70,12 @@ public class DirectQueryObjectController : Controller
 
         var response = await _enterspeedQueryService.Query(ApiKey, request, CancellationToken.None);
 
+        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            Console.WriteLine($"Multi-query request failed with status code: {response.StatusCode}");
+            return StatusCode((int)response.StatusCode, "Insufficient scope for accessing indices for current api-key");
+        }
+
         if (response.StatusCode != System.Net.HttpStatusCode.OK)
         {
             Console.WriteLine($"Multi-query request failed with status code: {response.StatusCode}");
@@ -252,6 +258,12 @@ public class DirectQueryObjectController : Controller
         // Here we will only get some good request to show how we can handle the response both for errors and success
         var response = await _enterspeedQueryService.Query(ApiKey, request, CancellationToken.None);
 
+        if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            Console.WriteLine($"Multi-query request failed with status code: {response.StatusCode}");
+            return StatusCode((int)response.StatusCode, "Insufficient scope for accessing indices for current api-key");
+        }
+
         if (response.StatusCode != System.Net.HttpStatusCode.OK)
         {
             Console.WriteLine($"Multi-query request failed with status code: {response.StatusCode}");
@@ -267,18 +279,32 @@ public class DirectQueryObjectController : Controller
 
         if (recentHighBudget is IError recentHighBudgetError)
         {
-            foreach (var queryError in recentHighBudgetError.Errors)
+            if (recentHighBudgetError.IsForbidden())
             {
-                _logger.LogInformation($"Error for 'recent-high-budget-key': {queryError.Errors}");
+                _logger.LogWarning("Query 'recent-high-budget-key' was denied — the API key does not have access to this index");
+            }
+            else
+            {
+                foreach (var queryError in recentHighBudgetError.Errors)
+                {
+                    _logger.LogInformation($"Error for 'recent-high-budget-key': {queryError.Errors}");
+                }
             }
         }
 
         // We then want base on the Movies to do some logic to get the movies that does not work
         if (topRatedNonAdult is IError topRatedNonAdultFailure)
         {
-            foreach (var queryError in topRatedNonAdultFailure.Errors)
+            if (topRatedNonAdultFailure.IsForbidden())
             {
-                _logger.LogInformation($"Error for 'top-rated-non-adult-key': {queryError.Errors}");
+                _logger.LogWarning("Query 'top-rated-non-adult-key' was denied — the API key does not have access to this index");
+            }
+            else
+            {
+                foreach (var queryError in topRatedNonAdultFailure.Errors)
+                {
+                    _logger.LogInformation($"Error for 'top-rated-non-adult-key': {queryError.Errors}");
+                }
             }
         }
 
