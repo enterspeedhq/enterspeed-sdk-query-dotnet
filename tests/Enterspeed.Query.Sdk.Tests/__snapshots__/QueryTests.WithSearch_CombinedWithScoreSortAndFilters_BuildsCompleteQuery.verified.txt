@@ -1,0 +1,25 @@
+﻿{
+  Filters: {
+    And: [
+      {
+        Operator: equals,
+        Value: active,
+        CaseInsensitive: false,
+        Field: status
+      }
+    ]
+  },
+  Sort: [
+    {
+      Field: _score
+    }
+  ],
+  Pagination: {
+    PageSize: 10
+  },
+  Search: {
+    Field: title,
+    Value: hiking,
+    Literal: false
+  }
+}

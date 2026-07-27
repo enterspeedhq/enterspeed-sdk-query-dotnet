@@ -20,5 +20,13 @@ namespace Enterspeed.Query.Sdk.Domain.Models
 
         [JsonPropertyName("facets")]
         public List<Facet> Facets { get; set; }
+
+        /// <summary>
+        /// Optional relevance search. Omitted from the serialized request when null,
+        /// so requests that do not use search are unchanged.
+        /// </summary>
+        [JsonPropertyName("search")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public QuerySearch Search { get; set; }
     }
 }
