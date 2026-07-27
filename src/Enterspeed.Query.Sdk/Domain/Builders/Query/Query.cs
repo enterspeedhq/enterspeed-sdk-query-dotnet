@@ -21,6 +21,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         private readonly List<IOperator> _accumulatedFilters = new List<IOperator>();
         private readonly List<Facet> _facets = new List<Facet>();
         private readonly List<string> _aliases = new List<string>();
+        private QuerySearch _search;
 
         public IQuery WithPagination(int page, int pageSize)
         {
@@ -156,6 +157,28 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
+        public IQuery WithSearch(string field, string value, bool literal = false)
+        {
+            if (string.IsNullOrWhiteSpace(field))
+            {
+                throw new ArgumentException("Field name cannot be null or whitespace.", nameof(field));
+            }
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException("Search value cannot be null or whitespace.", nameof(value));
+            }
+
+            _search = new QuerySearch
+            {
+                Field = field,
+                Value = value,
+                Literal = literal
+            };
+
+            return this;
+        }
+
         public QueryObject Build()
         {
             var queryObject = new QueryObject();
@@ -188,6 +211,12 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             if (_aliases.Count > 0)
             {
                 queryObject.Aliases = _aliases;
+            }
+
+            // Set search
+            if (_search != null)
+            {
+                queryObject.Search = _search;
             }
 
             return queryObject;

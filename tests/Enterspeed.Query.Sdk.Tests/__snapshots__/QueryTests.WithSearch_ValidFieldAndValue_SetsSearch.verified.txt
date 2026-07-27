@@ -1,0 +1,7 @@
+﻿{
+  Search: {
+    Field: title,
+    Value: hiking,
+    Literal: false
+  }
+}
