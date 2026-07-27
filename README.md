@@ -106,6 +106,31 @@ var response = await _enterspeedQueryService.Query(
     query);
 ```
 
+## Relevance Search and `_score` Sorting
+
+`WithSearch` applies a relevance search to a single text field. It is what makes sorting by the
+reserved `_score` field valid — the Query API rejects a `_score` sort when the request carries no
+search.
+
+```csharp
+var query = new QueryBuilder()
+    .AddQuery<BlogPost>("key", "indexName", builder => builder
+      .WithSearch(x => x.Title, "hiking")
+      .SortBy("_score", SortOrder.Desc)
+      .WithPagination(0, 10))
+    .Build();
+```
+
+Only fields of type `text` or `text[]` can be searched. Pass `literal: true` to match indexed tokens
+exactly, with no fuzziness:
+
+```csharp
+.WithSearch("title", "hiking", literal: true)
+```
+
+When you pass the field name as a string it is used verbatim, so it must match the index schema
+exactly. The property-selector overload derives the name for you, honouring `[JsonPropertyName]`.
+
 ## Lambda-Based Filtering
 
 The fluent API supports lambda-based filters that automatically combine multiple conditions. Multiple `Where()` calls are implicitly ANDed together, and the first filter is always an AND group by default.

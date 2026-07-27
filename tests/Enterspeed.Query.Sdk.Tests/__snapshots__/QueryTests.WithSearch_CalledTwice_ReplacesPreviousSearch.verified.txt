@@ -1,0 +1,7 @@
+﻿{
+  Search: {
+    Field: body,
+    Value: camping,
+    Literal: true
+  }
+}

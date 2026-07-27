@@ -405,4 +405,84 @@ public class QueryTests
     }
 
     #endregion
+
+    #region Search
+
+    [Fact]
+    public Task WithSearch_ValidFieldAndValue_SetsSearch()
+    {
+        var builder = new Query();
+        var result = builder
+            .WithSearch("title", "hiking")
+            .Build();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task WithSearch_Literal_SetsLiteralTrue()
+    {
+        var builder = new Query();
+        var result = builder
+            .WithSearch("title", "hiking", true)
+            .Build();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task WithSearch_CombinedWithScoreSortAndFilters_BuildsCompleteQuery()
+    {
+        var builder = new Query();
+        var result = builder
+            .WithSearch("title", "hiking")
+            .SortBy("_score", SortOrder.Desc)
+            .Where(f => f.Equals("status", "active"))
+            .WithPagination(0, 10)
+            .Build();
+        return Verify(result);
+    }
+
+    [Fact]
+    public Task WithSearch_CalledTwice_ReplacesPreviousSearch()
+    {
+        var builder = new Query();
+        var result = builder
+            .WithSearch("title", "hiking")
+            .WithSearch("body", "camping", true)
+            .Build();
+        return Verify(result);
+    }
+
+    [Fact]
+    public void Build_WithoutSearch_LeavesSearchNull()
+    {
+        var builder = new Query();
+        var result = builder.Build();
+        result.Search.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void WithSearch_NullOrEmptyField_ThrowsArgumentException(string field)
+    {
+        var builder = new Query();
+        Action act = () => builder.WithSearch(field, "hiking");
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*Field name cannot be null or whitespace*");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void WithSearch_NullOrEmptyValue_ThrowsArgumentException(string value)
+    {
+        var builder = new Query();
+        Action act = () => builder.WithSearch("title", value);
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*Search value cannot be null or whitespace*");
+    }
+
+    #endregion
 }

@@ -78,6 +78,12 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
             return this;
         }
 
+        IQuery IQuery.WithSearch(string field, string value, bool literal)
+        {
+            _inner.WithSearch(field, value, literal);
+            return this;
+        }
+
         public QueryObject Build()
         {
             return _inner.Build();
@@ -152,6 +158,25 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         public IQuery<T> WithAliases(params string[] aliases)
         {
             _inner.WithAliases(aliases);
+            return this;
+        }
+
+        public IQuery<T> WithSearch(string field, string value, bool literal = false)
+        {
+            _inner.WithSearch(field, value, literal);
+            return this;
+        }
+
+        public IQuery<T> WithSearch(Expression<Func<T, object>> fieldSelector, string value, bool literal = false)
+        {
+            if (fieldSelector == null)
+            {
+                throw new ArgumentNullException(nameof(fieldSelector));
+            }
+
+            var fieldName = GetFieldName(fieldSelector);
+
+            _inner.WithSearch(fieldName, value, literal);
             return this;
         }
 

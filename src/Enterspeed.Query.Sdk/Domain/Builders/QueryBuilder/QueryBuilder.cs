@@ -136,7 +136,8 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.MultiQuery
                 Aliases = query.Aliases,
                 Sort = query.Sort,
                 Pagination = query.Pagination,
-                Facets = query.Facets
+                Facets = query.Facets,
+                Search = query.Search
             };
 
             _queries.Add(key, multiQuery);

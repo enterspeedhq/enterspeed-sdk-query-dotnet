@@ -80,5 +80,24 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         /// <param name="aliases">The view aliases to include.</param>
         /// <returns>The query builder for method chaining.</returns>
         new IQuery<T> WithAliases(params string[] aliases);
+
+        /// <summary>
+        /// Applies a relevance search to a text field. Required in order to sort by "_score".
+        /// Calling this more than once replaces the previous search.
+        /// </summary>
+        /// <param name="field">The text field to search. Used verbatim, matching SortBy(string) — the Query API looks the field up by exact name, so pass it exactly as it appears in the index schema. Use the property selector overload to have the name derived for you.</param>
+        /// <param name="value">The value to search for.</param>
+        /// <param name="literal">When true, matches indexed tokens exactly (no fuzziness).</param>
+        /// <returns>The query builder for method chaining.</returns>
+        new IQuery<T> WithSearch(string field, string value, bool literal = false);
+
+        /// <summary>
+        /// Applies a relevance search using a property selector with implicit entity type.
+        /// </summary>
+        /// <param name="fieldSelector">Expression to select the property. The resulting field name is always lower case unless a JsonPropertyName attribute is present, which overrides the default naming.</param>
+        /// <param name="value">The value to search for.</param>
+        /// <param name="literal">When true, matches indexed tokens exactly (no fuzziness).</param>
+        /// <returns>The query builder for method chaining.</returns>
+        IQuery<T> WithSearch(Expression<Func<T, object>> fieldSelector, string value, bool literal = false);
     }
 }

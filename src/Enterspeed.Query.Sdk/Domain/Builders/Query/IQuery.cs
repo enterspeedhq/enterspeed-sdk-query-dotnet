@@ -83,6 +83,15 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         IQuery WithAliases(params string[] aliases);
 
         /// <summary>
+        /// Applies a relevance search to a text field. Required in order to sort by "_score".
+        /// Calling this more than once replaces the previous search.
+        /// </summary>
+        /// <param name="field">The text field to search.</param>
+        /// <param name="value">The value to search for.</param>
+        /// <param name="literal">When true, matches indexed tokens exactly (no fuzziness).</param>
+        IQuery WithSearch(string field, string value, bool literal = false);
+
+        /// <summary>
         /// Builds the query object with the configured parameters.
         /// </summary>
         /// <returns>The constructed QueryObject.</returns>
