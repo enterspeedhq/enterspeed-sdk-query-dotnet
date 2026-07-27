@@ -85,7 +85,7 @@ namespace Enterspeed.Query.Sdk.Domain.Builders.Query
         /// Applies a relevance search to a text field. Required in order to sort by "_score".
         /// Calling this more than once replaces the previous search.
         /// </summary>
-        /// <param name="field">The text field to search.</param>
+        /// <param name="field">The text field to search. Used verbatim, matching SortBy(string) — the Query API looks the field up by exact name, so pass it exactly as it appears in the index schema. Use the property selector overload to have the name derived for you.</param>
         /// <param name="value">The value to search for.</param>
         /// <param name="literal">When true, matches indexed tokens exactly (no fuzziness).</param>
         /// <returns>The query builder for method chaining.</returns>

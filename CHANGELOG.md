@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+  - `QuerySearch` — new model for the Query API's per-query `search` member (`field`, `value`, `literal`)
+  - `QueryObject.Search` — optional relevance search. Omitted from the serialized request when null, so requests that do not use search are unchanged
+  - `IQuery.WithSearch(field, value, literal)` and `IQuery<T>.WithSearch(...)`, including a property-selector overload, to set a search from the fluent builders
+  - Searching a text field is what makes sorting by the reserved `_score` field valid — the Query API rejects a `_score` sort when the request carries no search
+
+### Changed
+  - **Breaking for external implementers:** `IQuery` and `IQuery<T>` gained a `WithSearch` member. Anything outside this package that implements those interfaces directly must add it. Consumers that only *call* the interfaces are unaffected
+
 ## [2.0.1]
 ### Added
   - `ForbiddenApiResponse` — new model to deserialise the flat `{ "error": "Forbidden" }` body returned on HTTP 403
